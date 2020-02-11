@@ -1,0 +1,5 @@
+python>=3.6
+pandas>=0.24.2
+ruamel.yaml>=0.15.98
+argparse>=1.1
+re>=2.2.1

@@ -197,6 +197,8 @@ def properties_builder(node_name, vdictlist, category, omitterms, ndicts):
                 else:
                     del propdict[n['<field>']]['enumTerms']
                 properties_added += 1
+    if not propdict['$ref'] or propdict['$ref'] == 'nan':
+        del propdict['$ref']           
     return schema_utils.sortdictionary(propdict)
 
 def properties_preprocessing(vdictlist, ndictlist):

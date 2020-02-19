@@ -1,630 +1,824 @@
 #!/usr/bin/env python3
 
-from pandas import read_csv
-import argparse
-import ruamel.yaml
-from ruamel.yaml import YAML
-import re
 import os
+import re
+import sys
 import math
-import schema_utils
+import glob
+import argparse
+import pandas as pd
+from datetime import datetime
+from ruamel.yaml import YAML
+from ruamel.yaml.scalarstring import FoldedScalarString as fss
+from ruamel.yaml.scalarstring import DoubleQuotedScalarString as dbl_quote
+from ruamel.yaml.comments import CommentedMap as cmap
 from schema_utils import stripper
 
-S = ruamel.yaml.scalarstring.DoubleQuotedScalarString
-nodesbuilt = 0
-properties_added = 0
-def get_params():
-    """Gets arguments entered from the commandline and returns them as a object containing their references."""
 
-    parser = argparse.ArgumentParser(description="Specify whether yamls are generated with terms and enumDefs, name of directory containing target nodes, uses enum and nodeterms, and variables TSV files, and name of output dictionary.")
-    parser.add_argument("-terms", "--terms", dest="terms_", required=False, help="Use '-terms et' to generate yamls with original specification and '-terms at' to generate yamls with no terms or enumDefs")
-    parser.add_argument("-nodes", "--nodes", dest="nodes", required=True, help="Location of the nodes tsv")
-    parser.add_argument("-var", "--variables", dest="variables", required=True, help="Location of the variables tsv")
-    parser.add_argument("-out", "--output", dest="output", required=True, help="Location of the variables tsv")
+def get_params():
+    """
+    Parse the arguments passed to program
+    """
+
+    parser = argparse.ArgumentParser(description='Specify whether yamls are generated with terms and enumDefs, name of directory containing target nodes, uses enum and nodeterms, and variables TSV files, and name of output dictionary.')
+
+    # parser.add_argument('-t', '--terms', dest='terms_flag', required=False, help='Use "-terms et" to generate yamls with original specification and "-terms at" to generate yamls with no terms or enumDefs')
+    parser.add_argument('-i', '--in_dir', dest='in_dir', required=True, help='Location of the nodes tsv')
+    parser.add_argument('-o', '--out_dir', dest='out_dir', required=True, help='Location of the output yamls')
+    parser.add_argument('-t', '--terms_file', dest='terms_file', action='store_true', help='flag to generate terms file YAML')
 
     args = parser.parse_args()
 
     return args
 
-def buildnode(node, terms):
-    """Builds a python dictionary that will be used as a template for constructing nodes. Values are added to this stucture and
-    this is the dictionary that will be used to dump to a yaml file"""
 
-    global nodesbuilt
-    if node['<category>'] in ['index_file', 'metadata_file', 'data_file']:
-        sy = ['id', 'project_id', 'state', 'created_datetime', 'updated_datetime', 'file_state', 'error_type']
-    else:
-        sy = ['id', 'project_id', 'state', 'created_datetime', 'updated_datetime']
-    d = [["id"], ["project_id", "submitter_id"]]
-
-    outdict = {'$schema': S("http://json-schema.org/draft-04/schema#"),
-    'id': S(validate_node_name(node['<node>'])),
-    'title': node['<title>'],
-    'type': 'object',
-    'nodeTerms': get_terms(node.get('<nodeTerms>')),
-    'namespace': node['<namespace>'],
-    'category': node['<category>'],
-    'program': '*',
-    'project': '*',
-    'description': validate_descrip(node['<description>']),
-    'additionalProperties': False,
-    'submittable': node['<submittable>'],
-    'validators': None,
-    'systemProperties' : sy,
-    'links': [],
-    'required': ['submitter_id', 'type'],
-    "uniqueKeys": d,
-    'properties': {} }
-
-    if terms == 't':
-        del outdict['nodeTerms']
-    nodesbuilt += 1
-    return outdict
+def my_represent_none(self, data):
+    return self.represent_scalar(u'tag:yaml.org,2002:null', u'null')
 
 
-def properties_builder(node_name, vdictlist, category, omitterms, ndicts):
-    """Constructs the properties dictionary that will be added to the main node dictionary."""
-    global properties_added
-    # if category in ['data_file', 'index_file', 'metadata_file']:
-    #     propdict = {'$ref' : S("_definitions.yaml#/data_file_properties")}
-    # elif category == 'analysis':
-    #     propdict = {'$ref' : S("_definitions.yaml#/workflow_properties")}
-    # else:
-    #     propdict = {'$ref' : S("_definitions.yaml#/ubiquitous_properties")}
-    propdict = {'$ref': None}
-    for n in vdictlist:
-        if n['<node>'] == node_name:
-
-            print("\t\t{}".format(n['<field>'])) #trouble-shooting
-
-            ndict = None
-            for v in ndicts:
-                if v['<node>'] == node_name:
-                    ndict = v
-                    break
-            n['<description>'] = validate_descrip(n['<description>'])
-
-            if omitterms == 'at':
-                propdict[str(validate_property_name(n['<field>']))] = {
-                'description': n['<description>'],
-                'type': stripper(n['<type>']),
-                'enum': enums_builder_noterms(enum_merger(n['<options1>'] + n['<options2>'] + n['<options3>']+  n['<options4>'] +n['<options5>'] + n['<options6>'] + n['<options7>'] + n['<options8>']))
-                }
-                if propdict[str(validate_property_name(n['<field>']))]['description'] is None:
-                    del propdict[str(validate_property_name(n['<field>']))]['description']
-                if n['<type>'] == 'string':
-                    propdict[n['<field>']]['pattern'] = stripper(n['<pattern>'])
-                    if propdict[n['<field>']]['pattern'] == None:
-                        del propdict[n['<field>']]['pattern']
-
-                if not math.isnan(n['<maximum>']):
-                    propdict[n['<field>']]['maximum'] = stripper(int(n['<maximum>']))
-
-                if not math.isnan(n['<minimum>']):
-                    propdict[n['<field>']]['minimum'] = stripper(int(n['<minimum>']))
+def my_represent_none_blank(self, data):
+    return self.represent_scalar(u'tag:yaml.org,2002:null', u'')
 
 
-            # if 'project' in links:
-            #     propdict[n['<field>']].update({'$ref': })
+def validate_enum(temp_enum):
+    """
+    Strips spaces & converts values that could be interpreted in yaml as
+    nonstring, to double quotation string
+    """
 
-                if n['<type>'] == 'enum':
+    enum = stripper(temp_enum)
+    # enum = enum.replace(':', '-')
+
+    if enum != 'open' and '/' not in enum:
+        if isinstance(enum, str) and enum.lower() in ['yes', 'no', 'true', 'false', 'root', 'na']:
+            enum = dbl_quote(enum)
+
+        else:
+            try:
+                enum_ = eval(enum) # convert to int
+
+                if enum_ == 0:
+                    enum = dbl_quote(enum)
+
+                elif (isinstance(enum_, int) or isinstance(enum_, float)) and not(re.search('''[^0-9]''',enum)) :
+                    enum = dbl_quote(enum)
+
+            except:
+                try:
+                    enum_ = int(enum)
+                    enum  = dbl_quote(enum)
+
+                except:
                     try:
-                        del propdict[n['<field>']]['type']
-                    except KeyError:
+                        enum_ = float(enum)
+                        enum  = dbl_quote(enum)
+
+                    except:
                         pass
-                else:
-                    del propdict[n['<field>']]['enum']
-                properties_added += 1
-            elif omitterms == 'et':
 
-                propdict['$ref'] = S(ndict['<property_ref>'])
-                term = get_termnoref(n['<terms>'])
-                propdict[str(validate_property_name(n['<field>']))] = {
-                'description': n['<description>'],
-                'term': {'$ref': S(term)},
-                'type': stripper(n['<type>']),
-                'enum': enums_builder_noterms(enum_merger(n['<options1>'] + n['<options2>'] + n['<options3>']+  n['<options4>'] +n['<options5>'] + n['<options6>'] + n['<options7>'] + n['<options8>']))
-                }
-
-
-                if isinstance(term, str) and "_definitions.yaml" in term:
-                    del propdict[str(validate_property_name(n['<field>']))]['term']
-                    propdict[str(validate_property_name(n['<field>']))]['$ref'] = S(term)
-                    del propdict[str(validate_property_name(n['<field>']))]['type']
-                if term is None:
-                    del propdict[str(validate_property_name(n['<field>']))]['term']
-                if propdict[str(validate_property_name(n['<field>']))]['description'] is None:
-                    del propdict[str(validate_property_name(n['<field>']))]['description']
-                if n['<type>'] == 'string':
-                    propdict[n['<field>']]['pattern'] = stripper(n['<pattern>'])
-                    if propdict[n['<field>']]['pattern'] == None:
-                        del propdict[n['<field>']]['pattern']
-
-                if not math.isnan(n['<maximum>']):
-                    propdict[n['<field>']]['maximum'] = stripper(int(n['<maximum>']))
-
-                if not math.isnan(n['<minimum>']):
-                    propdict[n['<field>']]['minimum'] = stripper(int(n['<minimum>']))
-
-
-                if n['<type>'] == 'enum':
-                    try:
-                        del propdict[n['<field>']]['type']
-                    except KeyError:
-                        pass
-                else:
-                    del propdict[n['<field>']]['enum']
-                properties_added += 1
-
-
-            else:
-                propdict['$ref'] = S(ndict['<property_ref>'])
-                propdict[str(validate_property_name(n['<field>']))] = {
-                    # '$ref': ndict['<property_ref>'],
-                    'description': n['<description>'],
-                    'terms': get_terms(n['<terms>']),
-                    'type': stripper(n['<type>']),
-                    'enumTerms': enums_builder(enum_merger(n['<options1>'] + n['<options2>'] + n['<options3>']+  n['<options4>'] +n['<options5>'] + n['<options6>'] + n['<options7>'] + n['<options8>']))
-                    }
-
-
-                # if isinstance(term, str) and "_definitions.yaml" in term:
-                #     del propdict[str(validate_property_name(n['<field>']))]['term']
-                #     propdict[str(validate_property_name(n['<field>']))]['$ref'] = S(term)
-                if propdict[str(validate_property_name(n['<field>']))]['description'] is None:
-                    del propdict[str(validate_property_name(n['<field>']))]['description']
-                if n['<type>'] == 'string':
-                    propdict[n['<field>']]['pattern'] = stripper(n['<pattern>'])
-                    if propdict[n['<field>']]['pattern'] == None:
-                        del propdict[n['<field>']]['pattern']
-
-                if not math.isnan(n['<maximum>']):
-                    propdict[n['<field>']]['maximum'] = stripper(int(n['<maximum>']))
-
-                if not math.isnan(n['<minimum>']):
-                    propdict[n['<field>']]['minimum'] = stripper(int(n['<minimum>']))
-
-
-                # if 'project' in links:
-                #     propdict[n['<field>']].update({'$ref': })
-
-                if n['<type>'] == 'enum':
-                    try:
-
-                        del propdict[n['<field>']]['type']
-                    except KeyError:
-                        pass
-                else:
-                    del propdict[n['<field>']]['enumTerms']
-                properties_added += 1
-    if not propdict['$ref'] or propdict['$ref'] == 'nan':
-        del propdict['$ref']           
-    return schema_utils.sortdictionary(propdict)
-
-def properties_preprocessing(vdictlist, ndictlist):
-    """Takes in the properties of a node and screens them for illegal values, transforms enums into lists, and finds properties
-    labeled as required and adds them to the required key. """
-
-    for n in vdictlist:
-        # if isinstance(n['<options>'], str):
-        #     n['<options>'] = validatestring(n['<options>'])
-
-        if n['<type>'] == 'enum':
-            n['<options1>'] = enum2list(n['<options1>'])
-            n['<options2>'] = enum2list(n['<options2>'])
-            n['<options3>'] = enum2list(n['<options3>'])
-            n['<options4>'] = enum2list(n['<options4>'])
-            n['<options5>'] = enum2list(n['<options5>'])
-            n['<options6>'] = enum2list(n['<options6>'])
-            n['<options7>'] = enum2list(n['<options7>'])
-            n['<options8>'] = enum2list(n['<options8>'])
-
-        # if n['<required>'] == True:
-        #     node2mod = next(d for d in ndictlist if d['id'] == n['<node>'])
-        #     node2mod['required'].append(n['<field>'])
-
-
-
-
-
-def validate_property_name(string):
-    if type(string) != str and math.isnan(string):
-        return None
-    # match = re.search('''[^a-zA-Z\s0-9'",_/-]''', string)
-    match = re.search('''[^a-zA-Z_0-9]''', string)
-    if match:
-        raise Exception(f"Illegal character {match} found in property name {string}. Only letters and underscore allowed.")
-        print("\t\t{}".format(string))
-    return string
-
-def validate_node_name(string):
-    if type(string) != str:
-        if math.isnan(string):
-            return None
-    match = re.search('''[^a-zA-Z_]''', string)
-    if match:
-        raise Exception(f"Illegal character {match} found in node name {string}. Only lowercase letters and underscore allowed.")
-    return string.lower()
-
-def validatestring(string):
-    if type(string) != str and math.isnan(string):
-        return None
-    # match = re.search('''[^a-zA-Z\s0-9'",_/-]''', string)
-    match = re.search('[^ -~]', string)
-
-    if match:
-        raise Exception(f"Illegal character {match} was found in {string}")
-
-def validate_descrip(string):
-    if string is None:
-        return None
-    if type(string) != str and math.isnan(string):
-        return None
-    # S = ruamel.yaml.scalarstring.DoubleQuotedScalarString
-    # st = f"""{string}"""
-    string = ' '.join([stripper(s) for s in string.split('\n')])
-    string = stripper(string)
-    return string.replace(':', '-')
-
-def get_terms(terms):
-    if isinstance(terms, str):
-        lterms = terms.split(',')
-        terms = [{'$ref': S(stripper(t))} for t in lterms]
-        return terms
-    return None
-
-def get_termnoref(terms):
-    if isinstance(terms, str):
-        lterms = terms.split(',')
-        terms = lterms[0]
-        return terms
-    return None
-
-def enums_builder(enums):
-    enumdict = {}
-    if isinstance(enums, list):
-        for e in enums:
-            refs = get_enumdefs(e)
-            enum = get_enum(e)
-            enumdict[enum] = refs
-        return enumdict
-    return None
-
-def enums_builder_noterms(enums):
-    enuml = []
-    if isinstance(enums, list):
-        for e in enums:
-            print("\t\t\t{}".format(e)) # trouble-shooting
-            enum = get_enum(e)
-            if enum.lower() in ['yes', 'no', 'true', 'false'] or isinstance(enum, int) or isinstance(enum, float):
-                enuml.append(S(enum))
-            else:
-                enuml.append(enum)
-        return sorted(enuml)
-    return None
-
-def nodeTerms2list(string):
-    if type(links) != str and math.isnan(links):
-        return None
-    strs = string.split(',')
-    strs = [{'$ref': stripper(s)} for s in strs]
-    return strs
-
-def get_enumdefs(enum):
-    if isinstance(enum, str):
-        if '{' in enum:
-            start = enum.find('{')+1
-            end = enum.find('}')
-            assert end != -1, f"Closing bracket mismatch in enum {enum}"
-
-            refs = stripper(enum[start:end])
-            if refs == '':
-                return None
-            cre = refs.split(',')
-            crefs = [stripper(r) for r in cre]
-            return [{'$ref': S(r)} for r in crefs]
-
-
-def get_enum(enum):
-    if isinstance(enum, str):
-        if '{' in enum:
-            end = enum.find('{')
-            enum = stripper(enum[:end])
-            return enum
     return enum
 
-def reqs2list(rstring):
-    if isinstance(rstring, str):
-        rlis = [stripper(r) for r in rstring.split(',')]
+
+def validate_name(string, name_type):
+    """
+    Validates the node & property names
+    """
+
+    if type(string) != str and math.isnan(string):
+        return None
+
+    match = None
+
+    if name_type == 'node':
+        match = re.search('''[^a-zA-Z_]''', string)
+
+    elif name_type == 'property':
+        match = re.search('''[^a-zA-Z_0-9]''', string)
+
+    if match:
+        sys.exit('Illegal character {0} found in node/property name {1}. Only lowercase letters and underscore allowed.'.format(match, string))
+
+    return string.lower()
+
+
+def get_terms(terms):
+    """
+    Converts terms string into list of terms
+    """
+
+    if isinstance(terms, str):
+        lterms = terms.split(',')
+        terms  = [{'$ref': dbl_quote(stripper(t))} for t in lterms]
+
+        return terms
+
+    return None
+
+
+def validate_desc(string):
+    """
+    Validate the description text
+    """
+
+    if string is None:
+        return None
+
+    string = ' '.join([stripper(s) for s in string.split('\n')])
+    string = stripper(string)
+
+    return string
+
+
+def reqs2list(string):
+    """
+    Converts comma separated value string into list
+    """
+
+    if isinstance(string, type(None)):
+        return []
+
+    elif isinstance(string, str):
+        rlis = [stripper(r) for r in string.split(',')]
+
         return rlis
-    return rstring
+
+    return string
 
 
-def addlinks(ndict, maindict):
-    """Builds a links dictionary template and adds values from the input data. Then merges to the main node dictionary"""
+def string2list(key, val):
+    """
+    Converts complex comma & pipe separated link string into list of lists
+    """
 
-    links = []
-    if type(ndict['<link_name>']) != list and math.isnan(ndict['<link_name>']):
-        return None
-    #Hackish attempt to remove false links
-    todel = []
-    for i in range(len(ndict['<link_name>'])):
-        if ndict['<link_name>'][i] == '':
-            todel.append(i)
-    for i in todel:
-        del ndict['<link_name>'][i]
-    for lin in range(len(ndict['<link_name>'])):
-        if isinstance(ndict['<link_name>'][lin], str):
-            start = lin
-            # for l in range(start, len(ndict['<link_name>'])):
+    link_lst = []
 
-            link = {'name': stripper(ndict['<link_name>'][start]),
-                    'backref': stripper(ndict['<backref>'][start]),
-                    'label': stripper(ndict['<label>'][start]),
-                    'target_type': stripper(ndict['<target>'][start]),
-                    'multiplicity': stripper(ndict['<multiplicity>'][lin]),
-                    'required': stripper(ndict['<link_required>'][lin])}
-            links.append(link)
+    # in some cases val is False which will be evaluated & will return empty list
+    if val is not None:
+        val = str(val)
 
-    # if len(ndict['<link_name>'][-1]) > 1:
-    #     for l in range(len(ndict['<link_name>'][-1])):
-    #         if not isinstance(ndict['<link_name>'][-1][l], list):
-    #             link = {'name': stripper(ndict['<link_name>'][-1][l]),
-    #                     'backref': stripper(ndict['<backref>'][-1][l]),
-    #                     'label': stripper(ndict['<label>'][-1][l]),
-    #                     'target_type': stripper(ndict['<target>'][-1][l]),
-    #                     'multiplicity': stripper(ndict['<multiplicity>'][-1][l]),
-    #                     'required': stripper(ndict['<link_required>'][-1][l])}
-    #         links.append(link)
-    if not math.isnan(ndict['<link_group_required>']):
-        subgroups = []
+        for i in val.split('|'):
+            tmp_lst= []
 
-        #Currently only supports 1 subgroup
-        for l in range(len(ndict['<link_name>'][0][0])):
-                subgroup = {'name': stripper(ndict['<link_name>'][0][0][l]),
-                        'backref': stripper(ndict['<backref>'][0][0][l]),
-                        'label': stripper(ndict['<label>'][0][0][l]),
-                        'target_type': stripper(ndict['<target>'][0][0][l]),
-                        'multiplicity': stripper(ndict['<multiplicity>'][0][0][l]),
-                        'required': stripper(ndict['<link_required>'][0][0][l])}
-                subgroups.append(subgroup)
-        sub = {'exclusive': ndict['<group_exclusive>'], 'required': ndict['<link_group_required>'],  'subgroup': subgroups}
-        links.append(sub)
-    return links
+            for j in i.split(','):
+                j_ = stripper(j)
 
-# def process_subgroups(ndict, maindict, items):
+                if key in ['required', 'group_required', 'group_exclusive']:
+                    if j_ is not None and j_ != '':
+                        tmp_lst.append(eval(j_.title()))
+                    else:
+                        tmp_lst.append('')
+
+                else:
+                    tmp_lst.append(j_)
+
+            link_lst.append(tmp_lst)
+
+        return link_lst
+
+    return [['']]
 
 
-def links2list(links):
-    """Parses the string read in from links input field and transforms it to a list"""
-    if type(links) != str and math.isnan(links):
-        return None
-    outlinks = []
-    groups = []
-    while '[' in links:
-        start = links.find('[')+1
-        end = links.find(']')
-        group = stripper(links[start:end])
-        groups.append(group)
-        links = links[end+2:]
+def property_reference_setter(multiplicity):
+    """
+    Creates a reference for each link based on multiplicity to populate in the
+    properties block
+    """
 
-    for l in groups:
-        outlinks.append([links2list(l)])
+    if multiplicity in ['many_to_one', 'one_to_one']:
+        return {'$ref':dbl_quote('_definitions.yaml#/to_one') }
 
-    if isinstance(links, str):
-
-        links = links.split(',')
-        links = [x.strip() for x in links]
-        nongrouplinks = []
-        for l in links:
-            if l.upper() == 'TRUE':
-                # nongrouplinks += True
-                nongrouplinks.append(True)
-            elif l.upper() == 'FALSE':
-                # nongrouplinks += False
-                nongrouplinks.append(False)
-            else:
-                nongrouplinks.append(l)
-        # outlinks.append(nongrouplinks)
-        outlinks += nongrouplinks
-        return outlinks
-
-        # if ',' in links:
-        #     return links.split(',')
-
-    return [links]
-
-def node_preprocess(ndictlist):
-    """Adds the links to the main node links field after being transformed to a list"""
-
-    for n in ndictlist:
-        if type(n['<link_name>']) != str and math.isnan(n['<link_name>']):
-            continue
-        n['<link_name>'] = links2list(n['<link_name>'])
-        n['<link_required>'] = links2list(n['<link_required>'])
-        n['<backref>'] = links2list(n['<backref>'])
-        n['<target>'] = links2list(n['<target>'])
-        n['<multiplicity>'] = links2list(n['<multiplicity>'])
-        n['<label>'] = links2list(n['<label>'])
-
-def enum_merger(lists):
-    if isinstance(lists, list):
-        return sorted([' '.join(x.split()) for x in lists if str(x) != 'nan'])
-    return lists
-
-
-
-def property_reference_setter(diclinks):
-    """Searches the links block and finds the multiplicities for each link. Then puts a reference for each link in the properties
-    block"""
-
-    l = diclinks
-    # if l['name'] == 'projects':
-    #     if l['multiplicity'] in ['many_to_one', 'one_to_one']:
-    #         d['properties'].update({'projects': {'$ref':S("_definitions.yaml#/to_one_project") }})
-    #     else:
-    #         d['properties'].update({'projects': {'$ref':S("_definitions.yaml#/to_many_project") }})
-    # else:
-    #     if l['multiplicity'] in ['many_to_one', 'one_to_one']:
-    #         d['properties'].update({f"{l['name']}": {'$ref':S("_definitions.yaml#/to_one") }})
-    #     else:
-    #         d['properties'].update({f"{l['name']}": {'$ref':S("_definitions.yaml#/to_many") }})
-    if l['name'] == 'projects':
-        if l['multiplicity'] in ['many_to_one', 'one_to_one']:
-            d['properties']['projects'] = {'$ref':S("_definitions.yaml#/to_one_project") }
-        else:
-            d['properties']['projects'] = {'$ref':S("_definitions.yaml#/to_many_project") }
     else:
-        if l['multiplicity'] in ['many_to_one', 'one_to_one']:
-            d['properties'][f"{l['name']}"] = {'$ref':S("_definitions.yaml#/to_one") }
-        else:
-            d['properties'][f"{l['name']}"] = {'$ref':S("_definitions.yaml#/to_many") }
+        return {'$ref':dbl_quote('_definitions.yaml#/to_many') }
 
-def enum2list(enums):
-    """Transforms a string of enums into a list. For values that could be interpreted in yaml as nonstring, it adds quotations"""
-    if isinstance(enums, str):
 
-    #Enums already are in double quotes. Assumes no missing quotes
-        splitenums = enums.split('|')
-        final = set()
-        clean_enums = [stripper(x) for x in splitenums]
-        fenums = list(filter(lambda x: x != '|' and x != '', clean_enums))
-        # enumpro = list(filter(lambda x: x != ' ' and x != ',' and x != '' an, splitenums))
-        for s in fenums:
-            if s.lower() in ['yes', 'no', 'true', 'false'] or isinstance(s, int) or isinstance(s, float):
-                final.add(S(s))
+def build_enums(enum_df):
+    """
+    Converts enum dataframe into proper dict of dict containing enums & enumDefs
+    """
+
+    enum_list = enum_df.to_dict('records')
+    enum_dict = {}
+
+    for enum in enum_list:
+        node     = ''
+        field    = ''
+        enum_val = ''
+        enum_def = ''
+        dep_enum = ''
+
+        for key, val in enum.items():
+            if val:
+                key = key[1:-1]
+
+                if key == 'node':
+                    node = validate_name(val, 'node')
+
+                elif key == 'property':
+                    field = validate_name(val, 'property')
+
+                elif key == 'enum_value':
+                    enum_val = validate_enum(val)
+
+                elif key == 'enum_def':
+                    enum_def = val
+
+                elif key == 'deprecated':
+                    dep_enum = val
+
+        if node != '':
+            if node not in enum_dict:
+                enum_dict[node] = {}
+
+            if field != '':
+                if field not in enum_dict[node]:
+                    enum_dict[node][field] = {}
+
+                if 'enum' not in enum_dict[node][field]:
+                    enum_dict[node][field]['enum']            = []
+                    enum_dict[node][field]['deprecated_enum'] = []
+                    enum_dict[node][field]['enumDef']         = {}
+
+                if not dep_enum:
+                    enum_dict[node][field]['enum'].append(enum_val)
+
+                if dep_enum == 'yes':
+                    enum_dict[node][field]['deprecated_enum'].append(enum_val)
+
+                if enum_def == 'common':
+                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': [dbl_quote('_terms.yaml#/'+re.sub('[\W]+', '', enum_val.lower().strip().replace(' ', '_'))+'/'+enum_def)]}
+
+                elif enum_def == 'specific':
+                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': [dbl_quote('_terms.yaml#/'+re.sub('[\W]+', '', enum_val.lower().strip().replace(' ', '_'))+'/'+node+'/'+field)]}
+
+                elif enum_def:
+                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': [dbl_quote(stripper(x)) for x in enum_def.split(',')]}
+
+    # Validate deprecated enums present in enum section
+    missing_deprecated_enums = []
+
+    for key, val in enum_dict.items():
+        for k,v in val.items():
+            if 'deprecated_enum' in v:
+                for d in v['deprecated_enum']:
+                    if d not in v['enum']:
+                        missing_deprecated_enums.append(d + ' - ' + key + ' : ' + k)
+
+    if missing_deprecated_enums !=[]:
+        sys.exit('ERROR : Missing enum defs in main section for below deprecated enums: \n{0}'.format(missing_deprecated_enums))
+
+    # Remove empty deprecated_enum, enumDefs
+    for key, val in enum_dict.items():
+        for k,v in val.items():
+            if 'deprecated_enum' in v and v['deprecated_enum'] == []:
+                v.pop('deprecated_enum')
+
+            if 'enumDef' in v and v['enumDef'] == {}:
+                v.pop('enumDef')
+
+    return enum_dict
+
+
+def build_properties(variables_df, enum_df):
+    """
+    Converts variables dataframe into proper dict of dict containing variable
+    description, type & enums
+    """
+
+    var_list  = variables_df.to_dict('records')
+    var_dict  = {}
+
+    if enum_df is not None:
+        enum_dict = build_enums(enum_df)
+
+    else:
+        enum_dict = {}
+
+    for var in var_list:
+        temp_var  = {}
+        node      = ''
+        field     = ''
+
+        for key, val in var.items():
+            if val is not None:
+                key = key[1:-1]
+
+                if key == 'node':
+                    node = validate_name(val, 'node')
+
+                elif key == 'property':
+                    field = validate_name(val, 'property')
+
+                elif key == 'terms':
+                    val_ = reqs2list(val.lower())
+
+                    for v in val_:
+                        if '$ref' not in temp_var:
+                            temp_var['$ref'] = []
+
+                        if v == 'common':
+                            temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v))
+
+                        elif v == 'specific':
+                            temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v))
+
+                        elif v:
+                            temp_var['$ref'].append(dbl_quote(v))
+
+
+                        '''
+                        # Do not delete - for old format
+                        if '_terms.yaml' in v:
+                            if 'term' not in temp_var:
+                                temp_var['term'] = {}
+                                temp_var['term']['$ref'] = []
+
+                            temp_var['term']['$ref'].append(dbl_quote(v))
+
+                        else:
+                            if '$ref' not in temp_var:
+                                temp_var['$ref'] = []
+
+                            temp_var['$ref'].append(dbl_quote(v))
+                        '''
+
+                elif key == 'description':
+                    if val:
+                        val = fss(validate_desc(val))
+
+                    temp_var[key] = val
+
+                elif key == 'pattern':
+                    temp_var[key] = dbl_quote(val)
+
+                elif key == 'default':
+                    if val.title() in ['True', 'False']:
+                        val = eval(val.title())
+
+                    temp_var[key] = val
+
+                elif key == 'type' and val != 'enum':
+                    val_ = reqs2list(val)
+
+                    if len(val_) == 1:
+                        temp_var[key] = val_[0]
+
+                    else:
+                        temp_type = []
+
+                        for v in val_:
+                            if v == 'null':
+                                v= dbl_quote(v)
+
+                            temp_type.append({'type' : v})
+
+                        temp_var['oneOf'] = temp_type
+
+                elif key != 'type':
+                    temp_var[key] = val
+
+        if 'oneOf' in temp_var:
+            var_keys = ['maximum', 'minimum', 'pattern']
+
+            for k in var_keys:
+                if k in temp_var:
+                    for t in temp_var['oneOf']:
+                        if t['type'] != 'null' and k != 'pattern':
+                            t[k] = int(temp_var.pop(k))
+
+                        elif t['type'] != 'null' and k == 'pattern':
+                            t[k] = temp_var.pop(k)
+
+        if 'maximum' in temp_var:
+            temp_var['maximum'] = int(temp_var.pop('maximum'))
+
+        if 'minimum' in temp_var:
+            temp_var['minimum'] = int(temp_var.pop('minimum'))
+
+        # When type is enum it is not populated in the temp_var as temp_var is constructed
+        # to populate the actual values supposed to be populated in yaml
+        if 'type' not in temp_var and node in enum_dict and field in enum_dict[node]:
+            for k,v in enum_dict[node][field].items():
+                temp_var[k] = v
+
+        if node != '' and field != '':
+            if node in var_dict:
+                var_dict[node][field] = temp_var
+
             else:
-                final.add(s)
+                var_dict[node]        = {}
+                var_dict[node][field] = temp_var
 
-        return list(final)
+    return var_dict
 
-    return [enums]
 
-if __name__ == "__main__":
-    args = get_params()
-    if args.output[-1] != '/':
-        args.output += '/'
+def validate_links(link_dict, node_name):
+    """
+    Validates the link structure to ensure same number of subgroups are added
+    """
 
-    nodes = read_csv(args.nodes, index_col=None, header=0, sep = '\t', engine= 'python')
-    variables = read_csv(args.variables, index_col=None, header=0, sep = '\t', engine='python')
+    len_links = {}
+    flag      = True
+
+    for key, val in link_dict.items():
+        len_links[key]= [len(v) for v in val]
+
+    ref_link = len_links['name']
+    link_len = len(ref_link)
+
+    for key, val in len_links.items():
+        if len(val)!= link_len:
+            flag = False
+            print('\n{0} : "{1}" - {2} do not have same number of subgroups as "name" - has {3} subgroups'.format(node_name, key, len(val), link_len))
+
+        if key in ['group_exclusive','group_required']:
+            for i in range(len(ref_link)):
+               if (not(ref_link[i]>0 and val[i]==1)):
+                    flag = False
+                    print('\n{0} : subgroups in "{1}" - {2} do not have atleast 1 or have more than 1 values for each subgroup in "name"  - has {3} in each subgroup'.format(node_name, key, val, ref_link))
+
+        else:
+            if val != ref_link:
+                flag = False
+                print('\n{0} : subgroups in "{1}" - {2} do not have same number of values as "name" subgroup - has {3} in each subgroup'.format(node_name, key, val, ref_link))
+
+    return flag
+
+
+def add_links(link_dict, node_name):
+    """
+    Builds a links dictionary template and adds values from the input data then
+    merges to the main node dictionary
+    """
+
+    links     = []
+    link_refs = {}
+
+    if type(link_dict['name']) != list or link_dict['name'] == [['']]:
+        return links, link_refs
+
+    valid_links = validate_links(link_dict, node_name)
+
+    if valid_links:
+        for i in range(len(link_dict['name'])):
+            if link_dict['group_required'][i] != [''] and len(link_dict['name'][i]) > 1:
+                subgroups = []
+
+                for l in range(len(link_dict['name'][i])):
+                    subgroup = {'name'        : link_dict['name'][i][l],
+                                'backref'     : link_dict['backref'][i][l],
+                                'label'       : link_dict['label'][i][l],
+                                'target_type' : link_dict['target'][i][l],
+                                'multiplicity': link_dict['multiplicity'][i][l],
+                                'required'    : link_dict['required'][i][l]
+                               }
+
+                    subgroups.append(subgroup)
+                    link_refs[link_dict['name'][i][l]] = property_reference_setter(link_dict['multiplicity'][i][l])
+
+                sub = {'exclusive': link_dict['group_exclusive'][i][0], 'required': link_dict['group_required'][i][0], 'subgroup': subgroups}
+                links.append(sub)
+
+            elif link_dict['group_required'][i] == [''] and len(link_dict['name'][i]) == 1:
+                for l in range(len(link_dict['name'][i])):
+                    link = {'name'        : link_dict['name'][i][l],
+                            'backref'     : link_dict['backref'][i][l],
+                            'label'       : link_dict['label'][i][l],
+                            'target_type' : link_dict['target'][i][l],
+                            'multiplicity': link_dict['multiplicity'][i][l],
+                            'required'    : link_dict['required'][i][l]
+                           }
+
+                    links.append(link)
+                    link_refs[link_dict['name'][i][l]] = property_reference_setter(link_dict['multiplicity'][i][l])
+
+    else:
+        sys.exit('ERROR: fix the above link issues')
+
+    return links, link_refs
+
+
+def build_nodes(nodes_df, var_dict): #, terms_flag):
+    """
+    Builds a python dictionary that will be used as a template for constructing
+    node yaml file
+    """
 
     # Transform nodes tsv into a dictionary and process fields
-    nodedicts = nodes.to_dict('records')
-    node_preprocess(nodedicts)
+    nodedicts     = nodes_df.to_dict('records')
+    dict_of_nodes = {}
 
-    # Create a properly formatted master dictionary for every node
-    dictlist = []
-    for r in range(len(nodedicts)):
+    for node in nodedicts:
+        out_dict1     = {}
+        out_dict2     = {}
+        out_dict3     = {}
+        out_dict4     = {}
+        out_dict5     = {}
+        out_dict6     = {}
+        link_dict     = {}
+        property_ref  = ''
 
-        dict2add = nodedicts[r]
-        dictlist.append(buildnode(dict2add, args.terms_))
+        for key, val in node.items():
+            key = key[1:-1]
 
-    # Add the properly formatted links contents to each dictonary
-    linknames = {}
-    for i in range(len(dictlist)):
-        links =  addlinks(nodedicts[i], dictlist[i])
-        dictlist[i]['links'] = links
-        dictlist[i]['required'] += [req for req in reqs2list(nodedicts[i]['<required>']) if req not in dictlist[i]['required']]
+            if key == '$schema':
+                out_dict1[key] = dbl_quote(val)
+
+            elif key == 'id':
+                out_dict2[key] = dbl_quote(validate_name(val, 'node'))
+
+            elif key == 'description':
+                if val:
+                    val = fss(validate_desc(val))
+
+                out_dict2[key] = val
+
+            elif key == 'systemProperties':
+                out_dict3[key] = reqs2list(val)
+
+            elif key == 'required':
+                val_ = reqs2list(val)
+
+                if val_:
+                    out_dict4[key] = val_
+
+            elif key == 'uniqueKeys':
+                out_dict5[key] = string2list(key, val)
+
+            elif key == 'deprecated':
+                if val:
+                    out_dict6[key] = reqs2list(val)
+
+            elif key == 'root':
+                if val:
+                    out_dict2[key] = val
+
+            elif key == 'property_ref':
+                property_ref = val
+
+            elif key == 'nodeTerms': # and terms_flag == 'et': Check this flag value if its correct
+                val_ = get_terms(val)
+
+                if val_:
+                    out_dict2[key] = val_
+
+            elif 'link_' in key:
+                key_ = key.replace('link_','')
+
+                link_dict[key_]= string2list(key_, val)
+
+            else:
+                out_dict2[key] = val
+
+        # Add formatted links to each dictonary
+        links, link_refs =  add_links(link_dict, out_dict2['id'])
+
+        # Add formatted properties to each dictonary
+        properties = {}
+
+        if property_ref and property_ref != '':
+            properties['$ref'] = [dbl_quote(property_ref)]
+
+        if out_dict2['id'] in var_dict:
+            for key, val in var_dict[out_dict2['id']].items():
+                properties[key] = val
+
+        for key, val in link_refs.items():
+            properties[key] = val
+
+        dict_of_nodes[out_dict2['id']] = [item for item in [out_dict1, out_dict2, out_dict3, {'links' : links}, out_dict4, out_dict5, out_dict6, {'properties' : properties}] if item]
+
+    return dict_of_nodes
 
 
-    vdictlist = variables.to_dict('records')
-    nodes_to_update = set([n['<node>'] for n in vdictlist])
-    nodes_available = [n['id'] for n in dictlist]
-    properties_preprocessing(vdictlist, dictlist)
+def build_yamls(nodes_in_file, var_in_file, enum_in_file, in_dir, out_dir): #terms_flag,
+    """
+    Constructs node yaml file
+    """
 
-    # Construct and merge the properties fields dictionaries to respective master dictionary
-    for node in nodes_to_update:
-        print("\tUpdating node {}.".format(node)) # trouble-shooting
-        assert node in nodes_available, "Must contruct a node before adding properties"
-        for n in dictlist:
-            if n['id'] == node:
-                n['properties'] = properties_builder(node, vdictlist, n['category'], args.terms_, nodedicts)
-                if n['category'] in ['index_file', 'data_file', 'metadata_file']:
-                    n['required'] += [na for na in ['file_name', 'file_size', 'data_format', 'md5sum'] if na not in n['required']]
+    nodes_df     = pd.read_csv(nodes_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''])
+    variables_df = pd.read_csv(var_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''])
 
-     #dump the dictionarys to yaml files
-    yaml= YAML()
+    nodes_df     = nodes_df.where(nodes_df.notnull(), None)
+    variables_df = variables_df.where(variables_df.notnull(), None)
+
+    try:
+        enum_df  = pd.read_csv(enum_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''])
+        enum_df  = enum_df.where(enum_df.notnull(), None)
+    except pd.io.common.EmptyDataError:
+        enum_df  = None
+
+    var_dict     = build_properties(variables_df, enum_df)
+    node_dict    = build_nodes(nodes_df, var_dict) #, terms_flag)
+
+    num_nodes    = len(node_dict.keys())
+    num_props    = 0
+
+    yaml = YAML()
     yaml.default_flow_style = False
     yaml.indent(offset = 2, sequence = 4, mapping = 2)
-    def my_represent_none(self, data):
-        return self.represent_scalar(u'tag:yaml.org,2002:null', u'null')
     yaml.representer.add_representer(type(None), my_represent_none)
-    for d in dictlist:
-        index = 0
-        has_sub = False
-        #Finding a subgroup if it exists
-        if d['links'] is None:
-            continue
-        for key in d['links']:
-            dlinks = d['links']
-            if 'subgroup' in key.keys():
-                # dlinks = d['links'][index]['subgroup']
-                has_sub = True
-                break
-            index += 1
 
-        #Searches grouped links if they exist
-        if has_sub:
-            for l in d['links'][index]['subgroup']:
-                property_reference_setter(l)
-        #Searches ungrouped links if they exist
-        if index and has_sub:
-            for l in d['links'][:-1]:
-                property_reference_setter(l)
-        #Since a subgroup will be found in last element
-        elif index:
-            for l in d['links']:
-                property_reference_setter(l)
+    for key, val in node_dict.items():
+        with open('{0}{1}.yaml'.format(out_dir, key), 'w') as file:
+            for block in val:
+                if 'properties' in block:
+                    num_props += len(block['properties'].keys())
+                    dataprop   = cmap(block['properties'])
+
+                    # insert blank lines in properties
+                    for k in block['properties'].keys():
+                        dataprop.yaml_set_comment_before_after_key(k, before='\n')
+
+                    yaml.dump({'properties': dataprop}, file)
+
+                elif 'uniqueKeys' in block:
+                    block = cmap(block)
+
+                    yaml1 = YAML()
+                    yaml1.default_flow_style = None
+                    yaml1.indent(offset = 2, sequence = 4, mapping = 2)
+                    yaml1.representer.add_representer(type(None), my_represent_none)
+
+                    yaml1.dump(block, file)
+                    file.write('\n')
+
+                else:
+                    yaml.dump(block, file)
+                    file.write('\n')
+
+    print('*'*100, '\n')
+    print(' '*42, 'TSV  ---->  YAML', ' '*42, '\n')
+    print('*'*100, '\n')
+    print('Source Directory      : {0}'.format(in_dir), '\n')
+    print('Number of Nodes       : {0}'.format(num_nodes))
+    print('Number of Properties  : {0}'.format(num_props), '\n')
+    print('Destination Directory : {0}'.format(out_dir))
+    print('*'*100, '\n')
 
 
-        dprop = d['properties']
-        del d['properties']
-        duniq = d['uniqueKeys']
-        duniq = {'uniqueKeys': duniq}
-        del d['uniqueKeys']
-        #insert blank lines in node schema
-        data = ruamel.yaml.comments.CommentedMap(d)
-        data.yaml_set_comment_before_after_key('systemProperties', before='\n')
-        data.yaml_set_comment_before_after_key('links', before='\n')
-        data.yaml_set_comment_before_after_key('required', before='\n')
-        data.yaml_set_comment_before_after_key('properties', before='\n')
-        data.yaml_set_comment_before_after_key('id', before='\n')
-        datauni = ruamel.yaml.comments.CommentedMap(duniq)
-        datauni.yaml_set_comment_before_after_key('uniqueKeys', before='\n', after='\n')
+def build_terms(terms_in_file, in_dir, out_dir):
+    """
+    Constructs _terms yaml file
+    """
 
-        #insert blank lines in properties
-        dataprop = ruamel.yaml.comments.CommentedMap(dprop)
-        for k in dprop.keys():
-            dataprop.yaml_set_comment_before_after_key(k, before='\n')
+    terms_df      = pd.read_csv(terms_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''])
+    terms_df      = terms_df.where(terms_df.notnull(), None)
 
-        n = d['id']
+    term_dicts    = terms_df.to_dict('records')
 
-        # Write up to uniqueKeys
-        outpath = args.output + f"{n}.yaml"
-        os.makedirs(os.path.dirname(outpath), exist_ok=True)
-        fs = open(outpath, 'w')
-        yaml.dump(data, fs)
-        fs.close()
+    dict_of_terms = {'id' : '_terms'}
 
-        #Write uniqueKeys
-        yaml= YAML()
-        yaml.default_flow_style = None
-        yaml.indent(offset = 2, sequence = 4, mapping = 2)
-        fs = open(outpath, 'a')
-        yaml.dump(datauni, fs)
-        fs.close()
+    for term in term_dicts:
+        out_dict     = {}
+        property_nm  = ''
+        termdef      = {}
 
-        #write a blank line between props and uniquekeys
-        with open(outpath, 'a') as line:
-            line.write('\n')
-        #Write properties
+        for key, val in term.items():
+            key = key[1:-1]
 
-        yaml= YAML()
-        yaml.default_flow_style = False
-        yaml.indent(offset = 2, sequence = 4, mapping = 2)
-        fs = open(outpath, 'a')
-        yaml.dump({'properties': dataprop}, fs)
-        fs.close()
+            if key == 'property_or_enum':
+                if val == 'id':
+                    property_nm = '_id'
 
-    print(f"Completed with {nodesbuilt} nodes from tsv {args.nodes} and {properties_added} properties from {args.variables} modified")
-    print(f"Yamls outputted to {args.output}")
+                else:
+                    val_ = re.sub('[\W]+', '', val.lower().strip().replace(' ', '_'))
+                    property_nm = validate_enum(val_) # val
+
+            elif key == 'node':
+                node = val
+
+            elif key == 'enum_property':
+                enum = val
+
+            elif key == 'description':
+                if val:
+                    val = fss(validate_desc(val))
+
+                out_dict[key] = val
+
+            elif 'termDef:' in key:
+                key_ = key.replace('termDef:','')
+
+                if key_ == 'term':
+                    if val:
+                        val = fss(validate_desc(val))
+
+                    termdef[key_] = val
+
+                elif key_ == 'term_url':
+                    if val:
+                        val = dbl_quote(val)
+
+                    termdef[key_] = val
+
+                elif key_ == 'cde_id':
+                    try:
+                        termdef[key_] = int(val)
+
+                    except:
+                        termdef[key_] = val
+
+                elif key_ in ['term_id' , 'term_version']:
+                    if val:
+                        termdef[key_] = val
+
+                else:
+                    termdef[key_] = val
+
+        out_dict['termDef'] = termdef
+
+        if property_nm not in dict_of_terms:
+            dict_of_terms[property_nm] = {}
+
+        if node == 'common':
+            dict_of_terms[property_nm][node] = out_dict
+
+        else:
+            if node in dict_of_terms[property_nm]:
+                dict_of_terms[property_nm][node][enum] = out_dict
+
+            else:
+                dict_of_terms[property_nm][node]       = {}
+                dict_of_terms[property_nm][node][enum] = out_dict
+
+    yaml = YAML()
+    yaml.default_flow_style = False
+    yaml.indent(offset = 2, sequence = 4, mapping = 2)
+    yaml.representer.add_representer(type(None), my_represent_none_blank)
+
+    num_terms  = len(dict_of_terms.keys())
+    term_props = cmap(dict_of_terms)
+
+    # insert blank lines in properties
+    for k in dict_of_terms.keys():
+        term_props.yaml_set_comment_before_after_key(k, before='\n')
+
+    with open('{0}{1}.yaml'.format(out_dir, '_terms'), 'w') as file:
+        yaml.dump(term_props, file)
+
+    print('*'*100, '\n')
+    print(' '*42, 'TSV  ---->  YAML', ' '*42, '\n')
+    print('*'*100, '\n')
+    print('Source Directory      : {0}'.format(in_dir), '\n')
+    print('Number of Terms       : {0}'.format(num_terms), '\n')
+    print('Destination Directory : {0}'.format(out_dir))
+    print('*'*100, '\n')
+
+
+if __name__ == '__main__':
+
+    temp_st_time = datetime.now()
+    args         = get_params()
+
+    # terms_flag   = args.terms_flag
+    in_dir       = args.in_dir
+    out_dir      = args.out_dir
+    terms_file   = args.terms_file
+
+
+    if in_dir[-1] != '/':
+        in_dir += '/'
+
+    if out_dir[-1] != '/':
+        out_dir += '/'
+
+    if not os.path.exists(out_dir):
+        os.mkdir(out_dir)
+
+    tsvfiles      = glob.glob(in_dir+'*.txt')
+
+    nodes_in_file = None
+    var_in_file   = None
+    enum_in_file  = None
+    terms_in_file = None
+
+    for t in tsvfiles:
+        fn = t.split('/')[-1]
+
+        if 'nodes_' in fn[:6]:
+            nodes_in_file = t
+
+        elif 'variables_' in fn[:10]:
+            var_in_file = t
+
+        elif 'enums_' in fn[:6]:
+            enum_in_file = t
+
+        elif 'terms_' in fn[:6]:
+            terms_in_file = t
+
+    if terms_file and not(terms_in_file):
+        sys.exit('ERROR: Terms file not found, exiting the program')
+
+    if not(terms_file) and (not(nodes_in_file) or not(var_in_file) or not(enum_in_file)):
+        sys.exit('ERROR: one or more than one of the files (Nodes, Variable & Enum) not found, exiting the program')
+
+    if terms_file:
+        build_terms(terms_in_file, in_dir, out_dir)
+
+    else:
+        build_yamls(nodes_in_file, var_in_file, enum_in_file, in_dir, out_dir) # terms_flag
+
+    temp_fin_time = datetime.now()
+
+    print('\n\tTotal time for TSV <> YAML generation   : ' + str(temp_fin_time - temp_st_time))

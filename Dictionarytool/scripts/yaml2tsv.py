@@ -32,8 +32,10 @@ def get_params():
     parser.add_argument('-i', '--in_dir', dest='in_dir', required=True, help='Location of the yaml files')
     parser.add_argument('-o', '--out_dir', dest='out_dir', required=True, help='Destination of the tsv files')
     parser.add_argument('-d', '--dictionary', dest='dictionary', required=True, help='Name of the data dictionary')
+    parser.add_argument('-e', '--extension', dest='extension', default='xlsx', choices= ['tsv', 'txt', 'xlsx'], help='Extension of the files saved')
     parser.add_argument('-y', '--yaml_files', dest='yaml_files', type=csv_list, default=[], help='Comma separated list of yaml files to be converted')
     parser.add_argument('-t', '--terms_file', dest='terms_file', action='store_true', help='Flag to generate terms file TSV')
+    parser.add_argument('-f', '--first_import', dest='first_import', action='store_true', help='Flag to if its initial import')
 
     args = parser.parse_args()
 
@@ -53,26 +55,6 @@ def lrefs_to_srefs(refs):
 
     return sref
 
-
-'''
-def validate_text(string):
-    """
-    Do not delete
-    Checks if the string contains anything other than alphanumeric
-    (i.e. only numbers & special chars) & formats it for easy opening in excel
-
-    """
-    match = re.search([a-zA-Z_], string)
-    if match:
-        months = ['jan','feb','mar','apr','may','jun', 'jul', 'sep', 'oct', 'nov', 'dec']
-        for m in months:
-            if m in string.lower():
-                string = '="'+string+'"'
-    else:
-        string = '="'+string+'"'
-
-    return string
-'''
 
 def get_linknames(dic):
     """
@@ -421,7 +403,7 @@ def get_node_values(temp_node, node_dict):
     return node_dict
 
 
-def export_nodes_props(yamdics, out_dir, dictionary):
+def export_nodes_props(yamdics, out_dir, dictionary, extension):
     """
     Export node schema to TSV
     """
@@ -436,8 +418,6 @@ def export_nodes_props(yamdics, out_dir, dictionary):
 
     ndf = pd.DataFrame.from_dict(node_dict, orient='index')
 
-    ndf.to_csv('{0}nodes_{1}.txt'.format(out_dir, dictionary), sep= '\t', index = False, quoting = None)
-
     # create the properties & enum tsvs
     val_dict  = {}
     enum_dict = {}
@@ -448,8 +428,20 @@ def export_nodes_props(yamdics, out_dir, dictionary):
     vdf = pd.DataFrame.from_dict(val_dict, orient='index')
     edf = pd.DataFrame.from_dict(enum_dict, orient='index')
 
-    vdf.to_csv('{0}variables_{1}.txt'.format(out_dir, dictionary), sep='\t', index=False, quoting = None)
-    edf.to_csv('{0}enums_{1}.txt'.format(out_dir, dictionary), sep='\t', index=False, quoting = None)
+    if extension == 'xlsx':
+        writer = pd.ExcelWriter('{0}nodes_schema_{1}.xlsx'.format(out_dir, dictionary), engine = 'xlsxwriter')
+
+        ndf.to_excel(writer, index = False, sheet_name = 'nodes_{0}'.format(dictionary))
+        vdf.to_excel(writer, index = False, sheet_name = 'variables_{0}'.format(dictionary))
+        edf.to_excel(writer, index = False, sheet_name = 'enums_{0}'.format(dictionary))
+
+        writer.save()
+
+    else:
+        ndf.to_csv('{0}nodes_{1}.{2}'.format(out_dir, dictionary, extension), sep = '\t', index = False, quoting = None)
+        vdf.to_csv('{0}variables_{1}.{2}'.format(out_dir, dictionary, extension), sep = '\t', index = False, quoting = None)
+        edf.to_csv('{0}enums_{1}.{2}'.format(out_dir, dictionary, extension), sep = '\t', index = False, quoting = None)
+
 
     '''
     #needs to be investigated
@@ -466,9 +458,15 @@ def export_nodes_props(yamdics, out_dir, dictionary):
     print(' '*42, 'YAML  ---->  TSV', ' '*42, '\n')
     print('*'*100, '\n')
     print('Source Directory      : {0}'.format(in_dir))
-    print('Generated Files       : nodes_{0}.txt'.format(dictionary))
-    print(' '*24+'variables_{0}.txt'.format(dictionary))
-    print(' '*24+'enums_{0}.txt'.format(dictionary), '\n')
+
+    if extension == 'xlsx':
+        print('Generated Files       : nodes_schema_{0}.xlsx'.format(dictionary), '\n')
+
+    else:
+        print('Generated Files       : nodes_{0}.{1}'.format(dictionary, extension))
+        print(' '*24+'variables_{0}.{1}'.format(dictionary, extension))
+        print(' '*24+'enums_{0}.{1}'.format(dictionary, extension), '\n')
+
     print('Number of Nodes       : {0}'.format(ndf.shape[0]))
     print('Number of Properties  : {0}'.format(vdf.shape[0]), '\n')
     print('Destination Directory : {0}'.format(out_dir))
@@ -603,7 +601,7 @@ def enrich_terms(yamprops, terms_dict, enum_terms_dict):
     return terms_dict, enum_terms_dict
 
 
-def export_terms(terms, in_dir, out_dir, dictionary):
+def export_terms(terms, in_dir, out_dir, dictionary, extension):
     """
     Process _terms.yaml file and generate TSV file
     """
@@ -644,27 +642,40 @@ def export_terms(terms, in_dir, out_dir, dictionary):
 
     tdf = pd.DataFrame.from_dict(terms_dict, orient='index')
 
-    tdf.to_csv('{0}terms_{1}.txt'.format(out_dir, dictionary), sep= '\t', index = False, quoting = None)
-
-
     etdf = pd.DataFrame.from_dict(enum_terms_dict, orient='index')
     etdf = etdf.sort_values(by=['<property/enum>','<node>','<enum_property>','<property_or_enum>'])
 
-    etdf.to_csv('{0}missing_term_reference_{1}.txt'.format(out_dir, dictionary), sep= '\t', index = False, quoting = None)
+    if extension == 'xlsx':
+        writer = pd.ExcelWriter('{0}terms_schema_{1}.xlsx'.format(out_dir, dictionary), engine = 'xlsxwriter')
+
+        tdf.to_excel(writer, index = False, sheet_name = 'terms_{0}'.format(dictionary))
+        etdf.to_excel(writer, index = False, sheet_name = 'missing_term_reference_{0}'.format(dictionary)[0:30])
+
+        writer.save()
+
+    else:
+        tdf.to_csv('{0}terms_{1}.{2}'.format(out_dir, dictionary, extension), sep = '\t', index = False, quoting = None)
+        etdf.to_csv('{0}missing_term_reference_{1}.{2}'.format(out_dir, dictionary, extension), sep = '\t', index = False, quoting = None)
 
     print('*'*100, '\n')
     print(' '*42, 'YAML  ---->  TSV', ' '*42, '\n')
     print('*'*100, '\n')
     print('Source Directory      : {0}'.format(in_dir))
-    print('Generated Files       : terms_{0}.txt'.format(dictionary))
-    print(' '*24+'missing_term_reference_{0}.txt'.format(dictionary), '\n')
+
+    if extension == 'xlsx':
+        print('Generated Files       : terms_schema_{0}.xlsx'.format(dictionary), '\n')
+
+    else:
+        print('Generated Files       : terms_{0}.{1}'.format(dictionary, extension))
+        print(' '*24+'missing_term_reference_{0}.{1}'.format(dictionary, extension), '\n')
+
     print('Number of Terms       : {0}'.format(tdf.shape[0]))
     print('Number of Enums       : {0}'.format(etdf.shape[0]), '\n')
     print('Destination Directory : {0}'.format(out_dir))
     print('*'*100, '\n')
 
 
-def export_terms_future(terms, in_dir, out_dir, dictionary):
+def export_terms_future(terms, in_dir, out_dir, dictionary, extension):
     """
     Process _terms.yaml file and generate TSV file
     Copy of export_terms with support for extracting node & enum property info
@@ -735,20 +746,34 @@ def export_terms_future(terms, in_dir, out_dir, dictionary):
 
     tdf = pd.DataFrame.from_dict(terms_dict, orient='index')
 
-    tdf.to_csv('{0}terms_{1}.txt'.format(out_dir, dictionary), sep= '\t', index = False, quoting = None)
-
-
     etdf = pd.DataFrame.from_dict(enum_terms_dict, orient='index')
     etdf = etdf.sort_values(by=['<property/enum>','<node>','<enum_property>','<property_or_enum>'])
 
-    etdf.to_csv('{0}missing_term_reference_{1}.txt'.format(out_dir, dictionary), sep= '\t', index = False, quoting = None)
+    if extension == 'xlsx':
+        writer = pd.ExcelWriter('{0}terms_schema_{1}.xlsx'.format(out_dir, dictionary), engine = 'xlsxwriter')
+
+        tdf.to_excel(writer, index = False, sheet_name = 'terms_{0}'.format(dictionary))
+        etdf.to_excel(writer, index = False, sheet_name = 'missing_term_reference_{0}'.format(dictionary)[0:30])
+
+        writer.save()
+
+    else:
+        tdf.to_csv('{0}terms_{1}.{2}'.format(out_dir, dictionary, extension), sep = '\t', index = False, quoting = None)
+        etdf.to_csv('{0}missing_term_reference_{1}.{2}'.format(out_dir, dictionary, extension), sep = '\t', index = False, quoting = None)
+        #csv.QUOTE_ALL, quotechar='"')
 
     print('*'*100, '\n')
     print(' '*42, 'YAML  ---->  TSV', ' '*42, '\n')
     print('*'*100, '\n')
     print('Source Directory      : {0}'.format(in_dir))
-    print('Generated Files       : terms_{0}.txt'.format(dictionary))
-    print(' '*24+'missing_term_reference_{0}.txt'.format(dictionary), '\n')
+
+    if extension == 'xlsx':
+        print('Generated Files       : terms_schema_{0}.xlsx'.format(dictionary), '\n')
+
+    else:
+        print('Generated Files       : terms_{0}.{1}'.format(dictionary, extension))
+        print(' '*24+'missing_term_reference_{0}.{1}'.format(dictionary, extension), '\n')
+
     print('Number of Terms       : {0}'.format(tdf.shape[0]))
     print('Number of Enums       : {0}'.format(etdf.shape[0]), '\n')
     print('Destination Directory : {0}'.format(out_dir))
@@ -763,8 +788,10 @@ if __name__ == '__main__':
     in_dir       = args.in_dir
     out_dir      = args.out_dir
     dictionary   = args.dictionary
+    extension    = args.extension
     yaml_files   = args.yaml_files
     terms_file   = args.terms_file
+    first_import = args.first_import
 
 
     if in_dir[-1] != '/':
@@ -779,12 +806,15 @@ if __name__ == '__main__':
     yamdics, filteredyams = load_yams(in_dir, yaml_files, terms_file)
 
     if terms_file:
-        #export_terms is for first time migration & export_terms_future is for future use
-        # export_terms(yamdics[0], in_dir, out_dir, dictionary)
-        export_terms_future(yamdics[0], in_dir, out_dir, dictionary)
+        # export_terms is for first time migration & export_terms_future is for future use
+        if first_import:
+            export_terms(yamdics[0], in_dir, out_dir, dictionary, extension)
+
+        else:
+            export_terms_future(yamdics[0], in_dir, out_dir, dictionary, extension)
 
     else:
-        export_nodes_props(yamdics, out_dir, dictionary)
+        export_nodes_props(yamdics, out_dir, dictionary, extension)
 
     temp_fin_time = datetime.now()
 

@@ -188,7 +188,7 @@ def string2list(key, val):
     return [['']]
 
 
-def property_reference_setter(multiplicity):
+def property_reference_setter(multiplicity, link_name):
     """
     Creates a reference for each link based on multiplicity to populate in the
     properties block
@@ -330,7 +330,8 @@ def build_properties(variables_df, enum_df):
                     field = validate_name(val, 'property')
 
                 elif key == 'terms':
-                    val_ = reqs2list(val.lower())
+                    #val_ = reqs2list(val.lower())
+                    val_ = reqs2list(val)
 
                     for v in val_:
                         if '_terms.yaml' in v:
@@ -339,11 +340,11 @@ def build_properties(variables_df, enum_df):
 
                             if v == 'common':
                                 #temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v))
-                                temp_var['term']['$ref'] = dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v)
-
+                                #temp_var['term']['$ref'] = dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v)
+                                temp_var['term']['$ref'] = dbl_quote('_terms.yaml#/'+field.strip().replace(' ', '_')+'/'+v)
                             elif v == 'specific':
                                 #temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v))
-                                temp_var['term']['$ref'] = dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v)
+                                temp_var['term']['$ref'] = dbl_quote('_terms.yaml#/'+field.strip().replace(' ', '_')+'/'+node+'/'+v)
 
                             elif v:
                                 #temp_var['$ref'].append(dbl_quote(v))
@@ -502,7 +503,7 @@ def add_links(link_dict, node_name):
                                }
 
                     subgroups.append(subgroup)
-                    link_refs[link_dict['name'][i][l]] = property_reference_setter(link_dict['multiplicity'][i][l], node_name, link_dict['name'][i][l])
+                    link_refs[link_dict['name'][i][l]] = property_reference_setter(link_dict['multiplicity'][i][l], link_dict['name'][i][l])
 
                 sub = {'exclusive': link_dict['group_exclusive'][i][0], 'required': link_dict['group_required'][i][0], 'subgroup': subgroups}
                 links.append(sub)
@@ -518,7 +519,7 @@ def add_links(link_dict, node_name):
                            }
 
                     links.append(link)
-                    link_refs[link_dict['name'][i][l]] = property_reference_setter(link_dict['multiplicity'][i][l], node_name, link_dict['name'][i][l])
+                    link_refs[link_dict['name'][i][l]] = property_reference_setter(link_dict['multiplicity'][i][l], link_dict['name'][i][l])
     else:
         sys.exit('ERROR: fix the above link issues')
 
@@ -769,7 +770,8 @@ def build_terms(terms_in_file, in_dir, out_dir, extension):
                     property_nm = '_id'
 
                 else:
-                    val_ = re.sub('[\W]+', '', val.lower().strip().replace(' ', '_'))
+                    #val_ = re.sub('[\W]+', '', val.lower().strip().replace(' ', '_'))
+                    #val_ = re.sub('[\W]+', '', val.lower().strip().replace(' ', '_'))
                     property_nm = validate_enum(val_) # val
 
             elif key == 'node':

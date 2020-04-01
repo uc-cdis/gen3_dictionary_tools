@@ -304,11 +304,13 @@ def build_properties(variables_df, enum_df):
         enum_dict = {}
 
     for var in var_list:
+        # var = var_list[0]
         temp_var  = {}
         node      = ''
         field     = ''
 
         for key, val in var.items():
+            # key, val = list(var.items())[3]
             if val is not None:
                 key = key[1:-1]
 
@@ -356,8 +358,8 @@ def build_properties(variables_df, enum_df):
 
                 elif key == 'description':
                     if val:
-                        val = fss(validate_desc(val))
-                        #val = validate_desc(val)
+                        #val = fss(validate_desc(val))
+                        val = validate_desc(val)
                     temp_var[key] = val
 
                 elif key == 'pattern':
@@ -680,8 +682,11 @@ def build_yamls(nodes_in_file, var_in_file, enum_in_file, in_dir, out_dir, exten
                     for k in block['properties'].keys():
                         # k = list(block['properties'].keys())[0]
                         dataprop.yaml_set_comment_before_after_key(k, before='\n')
+                    yaml.dump({'properties': dataprop}, file)
                     yaml.dump({'properties': dataprop}, sys.stdout)
-                    #yaml.dump({'properties': dataprop}, file)
+                    #dataprop[]
+                    #yaml.safe_dump({'properties': block}, sys.stdout)
+
 
                 elif 'uniqueKeys' in block:
                     block = cmap(block)
@@ -692,10 +697,12 @@ def build_yamls(nodes_in_file, var_in_file, enum_in_file, in_dir, out_dir, exten
                     yaml1.representer.add_representer(type(None), my_represent_none)
 
                     yaml1.dump(block, file)
+                    yaml1.dump(block, sys.stdout)
                     file.write('\n')
 
                 else:
                     yaml.dump(block, file)
+                    yaml.dump(block, sys.stdout)
                     file.write('\n')
 
     print('*'*100, '\n')
@@ -824,6 +831,7 @@ def build_terms(terms_in_file, in_dir, out_dir, extension):
 
     with open('{0}{1}.yaml'.format(out_dir, '_terms'), 'w') as file:
         yaml.dump(term_props, file)
+        yaml.dump(term_props, sys.stdout)
 
     print('*'*100, '\n')
     print(' '*42, 'TSV  ---->  YAML', ' '*42, '\n')

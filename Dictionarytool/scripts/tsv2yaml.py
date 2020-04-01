@@ -246,13 +246,13 @@ def build_enums(enum_df):
                     enum_dict[node][field]['deprecated_enum'].append(enum_val)
 
                 if enum_def == 'common':
-                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': [dbl_quote('_terms.yaml#/'+re.sub('[\W]+', '', enum_val.lower().strip().replace(' ', '_'))+'/'+enum_def)]}
+                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': dbl_quote('_terms.yaml#/'+re.sub('[\W]+', '', enum_val.lower().strip().replace(' ', '_'))+'/'+enum_def)}
 
                 elif enum_def == 'specific':
-                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': [dbl_quote('_terms.yaml#/'+re.sub('[\W]+', '', enum_val.lower().strip().replace(' ', '_'))+'/'+node+'/'+field)]}
+                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': dbl_quote('_terms.yaml#/'+re.sub('[\W]+', '', enum_val.lower().strip().replace(' ', '_'))+'/'+node+'/'+field)}
 
                 elif enum_def:
-                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': [dbl_quote(stripper(x)) for x in enum_def.split(',')]}
+                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': dbl_quote(stripper(x)) for x in enum_def.split(',')}
 
     # Validate deprecated enums present in enum section
     missing_deprecated_enums = []
@@ -314,16 +314,19 @@ def build_properties(variables_df, enum_df):
 
                     for v in val_:
                         if '$ref' not in temp_var:
-                            temp_var['$ref'] = []
+                            temp_var['$ref'] = '' # []
 
                         if v == 'common':
-                            temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v))
+                            #temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v))
+                            temp_var['$ref'] = dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v)
 
                         elif v == 'specific':
-                            temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v))
-
+                            #temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v))
+                            temp_var['$ref'] = dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v)
+                            
                         elif v:
-                            temp_var['$ref'].append(dbl_quote(v))
+                            #temp_var['$ref'].append(dbl_quote(v))
+                            temp_var['$ref'] = dbl_quote(v)
 
 
                         '''
@@ -577,7 +580,7 @@ def build_nodes(nodes_df, var_dict): #, terms_flag):
         properties = {}
 
         if property_ref and property_ref != '':
-            properties['$ref'] = [dbl_quote(property_ref)]
+            properties['$ref'] = dbl_quote(property_ref)
 
         if out_dict2['id'] in var_dict:
             for key, val in var_dict[out_dict2['id']].items():

@@ -246,13 +246,13 @@ def build_enums(enum_df):
                     enum_dict[node][field]['deprecated_enum'].append(enum_val)
 
                 if enum_def == 'common':
-                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': [dbl_quote('_terms.yaml#/'+re.sub('[\W]+', '', enum_val.lower().strip().replace(' ', '_'))+'/'+enum_def)]}
+                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': dbl_quote('_terms.yaml#/'+re.sub('[\W]+', '', enum_val.lower().strip().replace(' ', '_'))+'/'+enum_def)}
 
                 elif enum_def == 'specific':
-                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': [dbl_quote('_terms.yaml#/'+re.sub('[\W]+', '', enum_val.lower().strip().replace(' ', '_'))+'/'+node+'/'+field)]}
+                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': dbl_quote('_terms.yaml#/'+re.sub('[\W]+', '', enum_val.lower().strip().replace(' ', '_'))+'/'+node+'/'+field)}
 
                 elif enum_def:
-                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': [dbl_quote(stripper(x)) for x in enum_def.split(',')]}
+                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': dbl_quote(stripper(x)) for x in enum_def.split(',')}
 
     # Validate deprecated enums present in enum section
     missing_deprecated_enums = []
@@ -313,19 +313,27 @@ def build_properties(variables_df, enum_df):
                     val_ = reqs2list(val.lower())
 
                     for v in val_:
-                        if '$ref' not in temp_var:
-                            temp_var['$ref'] = []
+                        if '_terms.yaml' in v:
+                            if 'term' not in temp_var:
+                                temp_var['term'] = {'$ref' :''} # []
+    
+                            if v == 'common':
+                                #temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v))
+                                temp_var['term']['$ref'] = dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v)
+    
+                            elif v == 'specific':
+                                #temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v))
+                                temp_var['term']['$ref'] = dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v)
+                                
+                            elif v:
+                                #temp_var['$ref'].append(dbl_quote(v))
+                                temp_var['term']['$ref'] = dbl_quote(v)
 
-                        if v == 'common':
-                            temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v))
+                        else:
+                            if '$ref' not in temp_var:
+                                temp_var['$ref'] = ''
 
-                        elif v == 'specific':
-                            temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v))
-
-                        elif v:
-                            temp_var['$ref'].append(dbl_quote(v))
-
-
+                            temp_var['$ref'] = dbl_quote(v)
                         '''
                         # Do not delete - for old format
                         if '_terms.yaml' in v:
@@ -577,7 +585,7 @@ def build_nodes(nodes_df, var_dict): #, terms_flag):
         properties = {}
 
         if property_ref and property_ref != '':
-            properties['$ref'] = [dbl_quote(property_ref)]
+            properties['$ref'] = dbl_quote(property_ref)
 
         if out_dict2['id'] in var_dict:
             for key, val in var_dict[out_dict2['id']].items():
@@ -817,6 +825,7 @@ def build_terms(terms_in_file, in_dir, out_dir, extension):
 if __name__ == '__main__':
 
     temp_st_time = datetime.now()
+    '''
     args         = get_params()
 
     # terms_flag   = args.terms_flag
@@ -824,7 +833,11 @@ if __name__ == '__main__':
     out_dir      = args.out_dir
     extension    = args.extension
     terms_file   = args.terms_file
-
+    '''
+    in_dir       = '/Users/gajananganji/Downloads/test_tsvs_in'
+    out_dir      = '/Users/gajananganji/Downloads/test_yamls'
+    extension    = 'tsv'
+    terms_file   = False
 
     if in_dir[-1] != '/':
         in_dir += '/'

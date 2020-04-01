@@ -323,7 +323,7 @@ def build_properties(variables_df, enum_df):
                         elif v == 'specific':
                             #temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v))
                             temp_var['$ref'] = dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v)
-                            
+
                         elif v:
                             #temp_var['$ref'].append(dbl_quote(v))
                             temp_var['$ref'] = dbl_quote(v)

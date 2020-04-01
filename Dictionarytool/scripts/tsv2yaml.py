@@ -194,11 +194,20 @@ def property_reference_setter(multiplicity):
     properties block
     """
 
-    if multiplicity in ['many_to_one', 'one_to_one']:
-        return {'$ref':dbl_quote('_definitions.yaml#/to_one') }
+    if link_name == 'projects':
+
+        if multiplicity in ['many_to_one', 'one_to_one']:
+            return {'$ref':dbl_quote('_definitions.yaml#/to_one_project') }
+
+        else:
+            return {'$ref':dbl_quote('_definitions.yaml#/to_many_project') }
 
     else:
-        return {'$ref':dbl_quote('_definitions.yaml#/to_many') }
+        if multiplicity in ['many_to_one', 'one_to_one']:
+            return {'$ref':dbl_quote('_definitions.yaml#/to_one') }
+
+        else:
+            return {'$ref':dbl_quote('_definitions.yaml#/to_many') }
 
 
 def build_enums(enum_df):
@@ -493,7 +502,7 @@ def add_links(link_dict, node_name):
                                }
 
                     subgroups.append(subgroup)
-                    link_refs[link_dict['name'][i][l]] = property_reference_setter(link_dict['multiplicity'][i][l])
+                    link_refs[link_dict['name'][i][l]] = property_reference_setter(link_dict['multiplicity'][i][l], node_name, link_dict['name'][i][l])
 
                 sub = {'exclusive': link_dict['group_exclusive'][i][0], 'required': link_dict['group_required'][i][0], 'subgroup': subgroups}
                 links.append(sub)
@@ -509,8 +518,7 @@ def add_links(link_dict, node_name):
                            }
 
                     links.append(link)
-                    link_refs[link_dict['name'][i][l]] = property_reference_setter(link_dict['multiplicity'][i][l])
-
+                    link_refs[link_dict['name'][i][l]] = property_reference_setter(link_dict['multiplicity'][i][l], node_name, link_dict['name'][i][l])
     else:
         sys.exit('ERROR: fix the above link issues')
 

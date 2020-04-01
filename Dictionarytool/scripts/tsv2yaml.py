@@ -12,7 +12,6 @@ from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import FoldedScalarString as fss
 from ruamel.yaml.scalarstring import DoubleQuotedScalarString as dbl_quote
 from ruamel.yaml.comments import CommentedMap as cmap
-from schema_utils import stripper
 from math import isnan
 
 def stripper(string):

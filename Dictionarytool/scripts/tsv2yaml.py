@@ -656,16 +656,17 @@ def build_yamls(nodes_in_file, var_in_file, enum_in_file, in_dir, out_dir, exten
 
     for key, val in node_dict.items():
         with open('{0}{1}.yaml'.format(out_dir, key), 'w') as file:
-            for block in val:
+            for block in val: # block = val[6]
                 if 'properties' in block:
                     num_props += len(block['properties'].keys())
                     dataprop   = cmap(block['properties'])
 
                     # insert blank lines in properties
                     for k in block['properties'].keys():
+                        # k = list(block['properties'].keys())[0]
                         dataprop.yaml_set_comment_before_after_key(k, before='\n')
-
-                    yaml.dump({'properties': dataprop}, file)
+                    yaml.dump({'properties': dataprop}, sys.stdout)
+                    #yaml.dump({'properties': dataprop}, file)
 
                 elif 'uniqueKeys' in block:
                     block = cmap(block)

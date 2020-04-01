@@ -347,8 +347,8 @@ def build_properties(variables_df, enum_df):
 
                 elif key == 'description':
                     if val:
-                        val = fss(validate_desc(val))
-
+                        #val = fss(validate_desc(val))
+                        val = validate_desc(val)
                     temp_var[key] = val
 
                 elif key == 'pattern':
@@ -532,7 +532,8 @@ def build_nodes(nodes_df, var_dict): #, terms_flag):
 
             elif key == 'description':
                 if val:
-                    val = fss(validate_desc(val))
+                    #val = fss(validate_desc(val))
+                    val = validate_desc(val)
 
                 out_dict2[key] = val
 
@@ -625,6 +626,9 @@ def build_yamls(nodes_in_file, var_in_file, enum_in_file, in_dir, out_dir, exten
         # enum_df      = enum_df.where(enum_df.notnull(), None)
 
     else:
+        # nodes_in_file = '/Users/christopher/Documents/Notes/BHC/dd/data_model_2.2/test/test_tsvs_in/nodes_test.tsv'
+        # var_in_file = '/Users/christopher/Documents/Notes/BHC/dd/data_model_2.2/test/test_tsvs_in/variables_test.tsv'
+        # enum_in_file = '/Users/christopher/Documents/Notes/BHC/dd/data_model_2.2/test/test_tsvs_in/enums_test.tsv'
         nodes_df     = pd.read_csv(nodes_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''])
         variables_df = pd.read_csv(var_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''])
 
@@ -745,7 +749,8 @@ def build_terms(terms_in_file, in_dir, out_dir, extension):
 
             elif key == 'description':
                 if val:
-                    val = fss(validate_desc(val))
+                    #val = fss(validate_desc(val))
+                    val = validate_desc(val)
 
                 out_dict[key] = val
 

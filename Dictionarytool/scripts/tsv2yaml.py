@@ -13,7 +13,17 @@ from ruamel.yaml.scalarstring import FoldedScalarString as fss
 from ruamel.yaml.scalarstring import DoubleQuotedScalarString as dbl_quote
 from ruamel.yaml.comments import CommentedMap as cmap
 from schema_utils import stripper
+from math import isnan
 
+def stripper(string):
+
+    if isinstance(string, str):
+        string = string.strip()
+        string = string.strip('|"\',')
+    elif isinstance(string, float):
+        if isnan(string):
+            return None
+    return string
 
 def get_params():
     """
@@ -347,8 +357,8 @@ def build_properties(variables_df, enum_df):
 
                 elif key == 'description':
                     if val:
-                        #val = fss(validate_desc(val))
-                        val = validate_desc(val)
+                        val = fss(validate_desc(val))
+                        #val = validate_desc(val)
                     temp_var[key] = val
 
                 elif key == 'pattern':
@@ -522,6 +532,7 @@ def build_nodes(nodes_df, var_dict): #, terms_flag):
         property_ref  = ''
 
         for key, val in node.items():
+            # key, val = list(node.items())[-1]
             key = key[1:-1]
 
             if key == '$schema':
@@ -659,6 +670,7 @@ def build_yamls(nodes_in_file, var_in_file, enum_in_file, in_dir, out_dir, exten
     yaml.representer.add_representer(type(None), my_represent_none)
 
     for key, val in node_dict.items():
+        # key,val = list(node_dict.items())[0]
         with open('{0}{1}.yaml'.format(out_dir, key), 'w') as file:
             for block in val: # block = val[6]
                 if 'properties' in block:

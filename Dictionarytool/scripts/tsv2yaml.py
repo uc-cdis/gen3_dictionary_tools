@@ -324,22 +324,27 @@ def build_properties(variables_df, enum_df):
                     val_ = reqs2list(val.lower())
 
                     for v in val_:
-                        if '$ref' not in temp_var:
-                            temp_var['$ref'] = '' # []
+                        if '_terms.yaml' in v:
+                            if 'term' not in temp_var:
+                                temp_var['term'] = {'$ref' :''} # []
 
-                        if v == 'common':
-                            #temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v))
-                            temp_var['$ref'] = dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v)
+                            if v == 'common':
+                                #temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v))
+                                temp_var['term']['$ref'] = dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v)
 
-                        elif v == 'specific':
-                            #temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v))
-                            temp_var['$ref'] = dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v)
+                            elif v == 'specific':
+                                #temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v))
+                                temp_var['term']['$ref'] = dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v)
 
-                        elif v:
-                            #temp_var['$ref'].append(dbl_quote(v))
+                            elif v:
+                                #temp_var['$ref'].append(dbl_quote(v))
+                                temp_var['term']['$ref'] = dbl_quote(v)
+
+                        else:
+                            if '$ref' not in temp_var:
+                                temp_var['$ref'] = ''
+
                             temp_var['$ref'] = dbl_quote(v)
-
-
                         '''
                         # Do not delete - for old format
                         if '_terms.yaml' in v:

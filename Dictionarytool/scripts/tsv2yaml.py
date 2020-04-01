@@ -25,6 +25,7 @@ def get_params():
     # parser.add_argument('-t', '--terms', dest='terms_flag', required=False, help='Use "-terms et" to generate yamls with original specification and "-terms at" to generate yamls with no terms or enumDefs')
     parser.add_argument('-i', '--in_dir', dest='in_dir', required=True, help='Location of the nodes tsv')
     parser.add_argument('-o', '--out_dir', dest='out_dir', required=True, help='Location of the output yamls')
+    parser.add_argument('-e', '--extension', dest='extension', default='xlsx', choices= ['tsv', 'txt', 'xlsx'], help='Extension of the files to be read')
     parser.add_argument('-t', '--terms_file', dest='terms_file', action='store_true', help='flag to generate terms file YAML')
 
     args = parser.parse_args()
@@ -351,7 +352,7 @@ def build_properties(variables_df, enum_df):
                     temp_var[key] = dbl_quote(val)
 
                 elif key == 'default':
-                    if val.title() in ['True', 'False']:
+                    if isinstance(val,str) and val.title() in ['True', 'False']:
                         val = eval(val.title())
 
                     temp_var[key] = val
@@ -590,22 +591,54 @@ def build_nodes(nodes_df, var_dict): #, terms_flag):
     return dict_of_nodes
 
 
-def build_yamls(nodes_in_file, var_in_file, enum_in_file, in_dir, out_dir): #terms_flag,
+def build_yamls(nodes_in_file, var_in_file, enum_in_file, in_dir, out_dir, extension): #terms_flag,
     """
     Constructs node yaml file
     """
 
-    nodes_df     = pd.read_csv(nodes_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''])
-    variables_df = pd.read_csv(var_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''])
+    if extension == 'xlsx':
+        xlsx_file  = pd.ExcelFile(nodes_in_file)
+        node_sheet = None
+        var_sheet  = None
+        enum_sheet = None
+
+        for i in xlsx_file.sheet_names:
+            if 'nodes_' in i:
+                node_sheet = i
+            if 'variables_' in i:
+                var_sheet  = i
+            if 'enums_' in i:
+                enum_sheet = i
+
+        if not(node_sheet) or not(var_sheet) or not(enum_sheet):
+            sys.exit('ERROR: one or more than one of the sheets (Nodes, Variable & Enum) not found, exiting the program')
+
+        nodes_df     = xlsx_file.parse(sheet_name = node_sheet, index_col=None, header=0, keep_default_na=False, na_values=[''])
+        variables_df = xlsx_file.parse(sheet_name = var_sheet, index_col=None, header=0, keep_default_na=False, na_values=[''])
+        enum_df      = xlsx_file.parse(sheet_name = enum_sheet, index_col=None, header=0, keep_default_na=False, na_values=[''])
+
+        # nodes_df     = nodes_df.where(nodes_df.notnull(), None)
+        # variables_df = variables_df.where(variables_df.notnull(), None)
+        # enum_df      = enum_df.where(enum_df.notnull(), None)
+
+    else:
+        nodes_df     = pd.read_csv(nodes_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''])
+        variables_df = pd.read_csv(var_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''])
+
+        # nodes_df     = nodes_df.where(nodes_df.notnull(), None)
+        # variables_df = variables_df.where(variables_df.notnull(), None)
+
+        try:
+            enum_df  = pd.read_csv(enum_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''])
+            # enum_df  = enum_df.where(enum_df.notnull(), None)
+        except pd.io.common.EmptyDataError:
+            enum_df  = None
 
     nodes_df     = nodes_df.where(nodes_df.notnull(), None)
     variables_df = variables_df.where(variables_df.notnull(), None)
 
-    try:
-        enum_df  = pd.read_csv(enum_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''])
+    if enum_df is not None:
         enum_df  = enum_df.where(enum_df.notnull(), None)
-    except pd.io.common.EmptyDataError:
-        enum_df  = None
 
     var_dict     = build_properties(variables_df, enum_df)
     node_dict    = build_nodes(nodes_df, var_dict) #, terms_flag)
@@ -656,17 +689,33 @@ def build_yamls(nodes_in_file, var_in_file, enum_in_file, in_dir, out_dir): #ter
     print('*'*100, '\n')
 
 
-def build_terms(terms_in_file, in_dir, out_dir):
+def build_terms(terms_in_file, in_dir, out_dir, extension):
     """
     Constructs _terms yaml file
     """
 
-    terms_df      = pd.read_csv(terms_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''])
-    terms_df      = terms_df.where(terms_df.notnull(), None)
+    if extension == 'xlsx':
+        xlsx_file  = pd.ExcelFile(terms_in_file)
+        term_sheet = None
 
-    term_dicts    = terms_df.to_dict('records')
+        for i in xlsx_file.sheet_names:
+            if 'terms_' in i:
+                term_sheet = i
 
-    dict_of_terms = {'id' : '_terms'}
+        if not(term_sheet):
+            sys.exit('ERROR: Terms sheet not found, exiting the program')
+
+        terms_df   = xlsx_file.parse(sheet_name = term_sheet, index_col=None, header=0, keep_default_na=False, na_values=[''])
+
+    else:
+        terms_df   = pd.read_csv(terms_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''])
+
+
+    terms_df       = terms_df.where(terms_df.notnull(), None)
+
+    term_dicts     = terms_df.to_dict('records')
+
+    dict_of_terms  = {'id' : '_terms'}
 
     for term in term_dicts:
         out_dict     = {}
@@ -773,6 +822,7 @@ if __name__ == '__main__':
     # terms_flag   = args.terms_flag
     in_dir       = args.in_dir
     out_dir      = args.out_dir
+    extension    = args.extension
     terms_file   = args.terms_file
 
 
@@ -785,39 +835,64 @@ if __name__ == '__main__':
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)
 
-    tsvfiles      = glob.glob(in_dir+'*.txt')
+
+    tsvfiles      = glob.glob(in_dir+'*.{0}'.format(extension))
 
     nodes_in_file = None
     var_in_file   = None
     enum_in_file  = None
     terms_in_file = None
+    nodes_schema  = None
+    terms_schema  = None
 
     for t in tsvfiles:
         fn = t.split('/')[-1]
 
-        if 'nodes_' in fn[:6]:
-            nodes_in_file = t
+        if extension == 'xlsx':
+            if 'nodes_schema_' in fn[:13]:
+                nodes_schema = t
 
-        elif 'variables_' in fn[:10]:
-            var_in_file = t
+            elif 'terms_schema_' in fn[:13]:
+                terms_schema = t
 
-        elif 'enums_' in fn[:6]:
-            enum_in_file = t
+        else:
+            if 'nodes_' in fn[:6]:
+                nodes_in_file = t
 
-        elif 'terms_' in fn[:6]:
-            terms_in_file = t
+            elif 'variables_' in fn[:10]:
+                var_in_file = t
 
-    if terms_file and not(terms_in_file):
-        sys.exit('ERROR: Terms file not found, exiting the program')
+            elif 'enums_' in fn[:6]:
+                enum_in_file = t
 
-    if not(terms_file) and (not(nodes_in_file) or not(var_in_file) or not(enum_in_file)):
-        sys.exit('ERROR: one or more than one of the files (Nodes, Variable & Enum) not found, exiting the program')
+            elif 'terms_' in fn[:6]:
+                terms_in_file = t
 
-    if terms_file:
-        build_terms(terms_in_file, in_dir, out_dir)
+    if extension == 'xlsx':
+        if terms_file and not(terms_schema):
+            sys.exit('ERROR: Terms file not found, exiting the program')
+
+        if not(terms_file) and not(nodes_schema):
+            sys.exit('ERROR: one or more than one of the files (Nodes, Variable & Enum) not found, exiting the program')
+
+        if terms_file:
+            build_terms(terms_schema, in_dir, out_dir, extension)
+
+        else:
+            build_yamls(nodes_schema, var_in_file, enum_in_file, in_dir, out_dir, extension) # terms_flag
 
     else:
-        build_yamls(nodes_in_file, var_in_file, enum_in_file, in_dir, out_dir) # terms_flag
+        if terms_file and not(terms_in_file):
+            sys.exit('ERROR: Terms file not found, exiting the program')
+
+        if not(terms_file) and (not(nodes_in_file) or not(var_in_file) or not(enum_in_file)):
+            sys.exit('ERROR: one or more than one of the files (Nodes, Variable & Enum) not found, exiting the program')
+
+        if terms_file:
+            build_terms(terms_in_file, in_dir, out_dir, extension)
+
+        else:
+            build_yamls(nodes_in_file, var_in_file, enum_in_file, in_dir, out_dir, extension) # terms_flag
 
     temp_fin_time = datetime.now()
 

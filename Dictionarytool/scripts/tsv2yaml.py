@@ -685,7 +685,7 @@ def build_yamls(nodes_in_file, var_in_file, enum_in_file, in_dir, out_dir, exten
     yaml.representer.add_representer(type(None), my_represent_none)
 
     for key, val in node_dict.items():
-        print("\n\n{}:".format(key))
+        print("\n\n\n{}:\n\n\n".format(key))
         # key,val = list(node_dict.items())[0]
         with open('{0}{1}.yaml'.format(out_dir, key), 'w') as file:
             for block in val: # block = val[6]

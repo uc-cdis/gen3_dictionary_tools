@@ -108,7 +108,7 @@ def validate_name(string, name_type):
     if match:
         sys.exit('Illegal character {0} found in {1} name {2}. Only lowercase letters and underscore allowed.'.format(match, name_type, string))
 
-    return string.lower()
+    return string
 
 
 def get_terms(terms):

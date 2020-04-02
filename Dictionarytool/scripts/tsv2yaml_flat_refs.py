@@ -12,17 +12,8 @@ from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import FoldedScalarString as fss
 from ruamel.yaml.scalarstring import DoubleQuotedScalarString as dbl_quote
 from ruamel.yaml.comments import CommentedMap as cmap
-from math import isnan
+from schema_utils import stripper
 
-def stripper(string):
-
-    if isinstance(string, str):
-        string = string.strip()
-        string = string.strip('|"\',')
-    elif isinstance(string, float):
-        if isnan(string):
-            return None
-    return string
 
 def get_params():
     """
@@ -100,13 +91,13 @@ def validate_name(string, name_type):
     match = None
 
     if name_type == 'node':
-        match = re.search('''[^a-zA-Z_0-9]''', string)
+        match = re.search('''[^a-zA-Z_]''', string)
 
     elif name_type == 'property':
         match = re.search('''[^a-zA-Z_0-9]''', string)
 
     if match:
-        sys.exit('Illegal character {0} found in {1} name {2}. Only lowercase letters and underscore allowed.'.format(match, name_type, string))
+        sys.exit('Illegal character {0} found in node/property name {1}. Only lowercase letters and underscore allowed.'.format(match, string))
 
     return string.lower()
 
@@ -313,13 +304,11 @@ def build_properties(variables_df, enum_df):
         enum_dict = {}
 
     for var in var_list:
-        # var = var_list[0]
         temp_var  = {}
         node      = ''
         field     = ''
 
         for key, val in var.items():
-            # key, val = list(var.items())[3]
             if val is not None:
                 key = key[1:-1]
 
@@ -330,8 +319,7 @@ def build_properties(variables_df, enum_df):
                     field = validate_name(val, 'property')
 
                 elif key == 'terms':
-                    #val_ = reqs2list(val.lower())
-                    val_ = reqs2list(val)
+                    val_ = reqs2list(val.lower())
 
                     for v in val_:
                         if '_terms.yaml' in v:
@@ -340,11 +328,11 @@ def build_properties(variables_df, enum_df):
 
                             if v == 'common':
                                 #temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v))
-                                #temp_var['term']['$ref'] = dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v)
-                                temp_var['term']['$ref'] = dbl_quote('_terms.yaml#/'+field.strip().replace(' ', '_')+'/'+v)
+                                temp_var['term']['$ref'] = dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v)
+
                             elif v == 'specific':
                                 #temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v))
-                                temp_var['term']['$ref'] = dbl_quote('_terms.yaml#/'+field.strip().replace(' ', '_')+'/'+node+'/'+v)
+                                temp_var['term']['$ref'] = dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v)
 
                             elif v:
                                 #temp_var['$ref'].append(dbl_quote(v))
@@ -373,8 +361,8 @@ def build_properties(variables_df, enum_df):
 
                 elif key == 'description':
                     if val:
-                        #val = fss(validate_desc(val))
-                        val = validate_desc(val)
+                        val = fss(validate_desc(val))
+
                     temp_var[key] = val
 
                 elif key == 'pattern':
@@ -503,7 +491,7 @@ def add_links(link_dict, node_name):
                                }
 
                     subgroups.append(subgroup)
-                    link_refs[link_dict['name'][i][l]] = property_reference_setter(link_dict['multiplicity'][i][l], link_dict['name'][i][l])
+                    link_refs[link_dict['name'][i][l]] = property_reference_setter(link_dict['multiplicity'][i][l], node_name, link_dict['name'][i][l])
 
                 sub = {'exclusive': link_dict['group_exclusive'][i][0], 'required': link_dict['group_required'][i][0], 'subgroup': subgroups}
                 links.append(sub)
@@ -519,7 +507,8 @@ def add_links(link_dict, node_name):
                            }
 
                     links.append(link)
-                    link_refs[link_dict['name'][i][l]] = property_reference_setter(link_dict['multiplicity'][i][l], link_dict['name'][i][l])
+                    link_refs[link_dict['name'][i][l]] = property_reference_setter(link_dict['multiplicity'][i][l], node_name, link_dict['name'][i][l])
+
     else:
         sys.exit('ERROR: fix the above link issues')
 
@@ -547,7 +536,6 @@ def build_nodes(nodes_df, var_dict): #, terms_flag):
         property_ref  = ''
 
         for key, val in node.items():
-            # key, val = list(node.items())[-1]
             key = key[1:-1]
 
             if key == '$schema':
@@ -558,8 +546,7 @@ def build_nodes(nodes_df, var_dict): #, terms_flag):
 
             elif key == 'description':
                 if val:
-                    #val = fss(validate_desc(val))
-                    val = validate_desc(val)
+                    val = fss(validate_desc(val))
 
                 out_dict2[key] = val
 
@@ -652,9 +639,6 @@ def build_yamls(nodes_in_file, var_in_file, enum_in_file, in_dir, out_dir, exten
         # enum_df      = enum_df.where(enum_df.notnull(), None)
 
     else:
-        # nodes_in_file = '/Users/christopher/Documents/Notes/BHC/dd/data_model_2.2/test/test_tsvs_in/nodes_test.tsv'
-        # var_in_file = '/Users/christopher/Documents/Notes/BHC/dd/data_model_2.2/test/test_tsvs_in/variables_test.tsv'
-        # enum_in_file = '/Users/christopher/Documents/Notes/BHC/dd/data_model_2.2/test/test_tsvs_in/enums_test.tsv'
         nodes_df     = pd.read_csv(nodes_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''])
         variables_df = pd.read_csv(var_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''])
 
@@ -664,11 +648,8 @@ def build_yamls(nodes_in_file, var_in_file, enum_in_file, in_dir, out_dir, exten
         try:
             enum_df  = pd.read_csv(enum_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''])
             # enum_df  = enum_df.where(enum_df.notnull(), None)
-        except UnicodeDecodeError:
-            try:
-                enum_df  = pd.read_csv(enum_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''], encoding='latin-1')
-            except pd.io.common.EmptyDataError:
-                enum_df  = None
+        except pd.io.common.EmptyDataError:
+            enum_df  = None
 
     nodes_df     = nodes_df.where(nodes_df.notnull(), None)
     variables_df = variables_df.where(variables_df.notnull(), None)
@@ -688,23 +669,17 @@ def build_yamls(nodes_in_file, var_in_file, enum_in_file, in_dir, out_dir, exten
     yaml.representer.add_representer(type(None), my_represent_none)
 
     for key, val in node_dict.items():
-        print("\n\n\n{}:\n\n\n".format(key))
-        # key,val = list(node_dict.items())[0]
         with open('{0}{1}.yaml'.format(out_dir, key), 'w') as file:
-            for block in val: # block = val[6]
+            for block in val:
                 if 'properties' in block:
                     num_props += len(block['properties'].keys())
                     dataprop   = cmap(block['properties'])
 
                     # insert blank lines in properties
                     for k in block['properties'].keys():
-                        # k = list(block['properties'].keys())[0]
                         dataprop.yaml_set_comment_before_after_key(k, before='\n')
-                    yaml.dump({'properties': dataprop}, file)
-                    yaml.dump({'properties': dataprop}, sys.stdout)
-                    #dataprop[]
-                    #yaml.safe_dump({'properties': block}, sys.stdout)
 
+                    yaml.dump({'properties': dataprop}, file)
 
                 elif 'uniqueKeys' in block:
                     block = cmap(block)
@@ -715,12 +690,10 @@ def build_yamls(nodes_in_file, var_in_file, enum_in_file, in_dir, out_dir, exten
                     yaml1.representer.add_representer(type(None), my_represent_none)
 
                     yaml1.dump(block, file)
-                    yaml1.dump(block, sys.stdout)
                     file.write('\n')
 
                 else:
                     yaml.dump(block, file)
-                    yaml.dump(block, sys.stdout)
                     file.write('\n')
 
     print('*'*100, '\n')
@@ -774,8 +747,7 @@ def build_terms(terms_in_file, in_dir, out_dir, extension):
                     property_nm = '_id'
 
                 else:
-                    #val_ = re.sub('[\W]+', '', val.lower().strip().replace(' ', '_'))
-                    #val_ = re.sub('[\W]+', '', val.lower().strip().replace(' ', '_'))
+                    val_ = re.sub('[\W]+', '', val.lower().strip().replace(' ', '_'))
                     property_nm = validate_enum(val_) # val
 
             elif key == 'node':
@@ -786,8 +758,7 @@ def build_terms(terms_in_file, in_dir, out_dir, extension):
 
             elif key == 'description':
                 if val:
-                    #val = fss(validate_desc(val))
-                    val = validate_desc(val)
+                    val = fss(validate_desc(val))
 
                 out_dict[key] = val
 
@@ -850,7 +821,6 @@ def build_terms(terms_in_file, in_dir, out_dir, extension):
 
     with open('{0}{1}.yaml'.format(out_dir, '_terms'), 'w') as file:
         yaml.dump(term_props, file)
-        yaml.dump(term_props, sys.stdout)
 
     print('*'*100, '\n')
     print(' '*42, 'TSV  ---->  YAML', ' '*42, '\n')
@@ -864,6 +834,7 @@ def build_terms(terms_in_file, in_dir, out_dir, extension):
 if __name__ == '__main__':
 
     temp_st_time = datetime.now()
+    '''
     args         = get_params()
 
     # terms_flag   = args.terms_flag
@@ -871,7 +842,11 @@ if __name__ == '__main__':
     out_dir      = args.out_dir
     extension    = args.extension
     terms_file   = args.terms_file
-
+    '''
+    in_dir       = '/Users/gajananganji/Downloads/test_tsvs_in'
+    out_dir      = '/Users/gajananganji/Downloads/test_yamls'
+    extension    = 'tsv'
+    terms_file   = False
 
     if in_dir[-1] != '/':
         in_dir += '/'

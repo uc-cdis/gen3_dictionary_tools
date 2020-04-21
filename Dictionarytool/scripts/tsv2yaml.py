@@ -179,17 +179,26 @@ def string2list(key, val):
     return [['']]
 
 
-def property_reference_setter(multiplicity):
+def property_reference_setter(multiplicity, link_name):
     """
     Creates a reference for each link based on multiplicity to populate in the
     properties block
     """
 
-    if multiplicity in ['many_to_one', 'one_to_one']:
-        return {'$ref':dbl_quote('_definitions.yaml#/to_one') }
+    if link_name == 'projects':
+
+        if multiplicity in ['many_to_one', 'one_to_one']:
+            return {'$ref':dbl_quote('_definitions.yaml#/to_one_project') }
+
+        else:
+            return {'$ref':dbl_quote('_definitions.yaml#/to_many_project') }
 
     else:
-        return {'$ref':dbl_quote('_definitions.yaml#/to_many') }
+        if multiplicity in ['many_to_one', 'one_to_one']:
+            return {'$ref':dbl_quote('_definitions.yaml#/to_one') }
+
+        else:
+            return {'$ref':dbl_quote('_definitions.yaml#/to_many') }
 
 
 def build_enums(enum_df):
@@ -374,6 +383,20 @@ def build_properties(variables_df, enum_df):
 
                         temp_var['oneOf'] = temp_type
 
+                elif key == 'items':
+                    if val in ['string', 'number', 'integer', 'null', 'boolean']:
+                        temp_var[key] = {'type': val}
+
+                    elif val == 'enum':
+                        temp_var[key] = {val : []}
+
+                elif key in ['minItems', 'maxItems', 'uniqueItems']:
+                    if 'items' in temp_var and temp_var['items'] != {}:
+                        temp_var['items'][key] = val
+
+                    else:
+                        temp_var['items'] = {key : val}
+
                 elif key != 'type':
                     temp_var[key] = val
 
@@ -397,9 +420,13 @@ def build_properties(variables_df, enum_df):
 
         # When type is enum it is not populated in the temp_var as temp_var is constructed
         # to populate the actual values supposed to be populated in yaml
-        if 'type' not in temp_var and node in enum_dict and field in enum_dict[node]:
+        if ('type' not in temp_var or temp_var['type'] == 'array') and node in enum_dict and field in enum_dict[node]:
             for k,v in enum_dict[node][field].items():
-                temp_var[k] = v
+                if k == 'enum' and 'type' in temp_var and temp_var['type'] == 'array':
+                    temp_var['items'][k] = v
+
+                else:
+                    temp_var[k] = v
 
         if node != '' and field != '':
             if node in var_dict:
@@ -474,7 +501,7 @@ def add_links(link_dict, node_name):
                                }
 
                     subgroups.append(subgroup)
-                    link_refs[link_dict['name'][i][l]] = property_reference_setter(link_dict['multiplicity'][i][l])
+                    link_refs[link_dict['name'][i][l]] = property_reference_setter(link_dict['multiplicity'][i][l], link_dict['name'][i][l])
 
                 sub = {'exclusive': link_dict['group_exclusive'][i][0], 'required': link_dict['group_required'][i][0], 'subgroup': subgroups}
                 links.append(sub)
@@ -490,7 +517,7 @@ def add_links(link_dict, node_name):
                            }
 
                     links.append(link)
-                    link_refs[link_dict['name'][i][l]] = property_reference_setter(link_dict['multiplicity'][i][l])
+                    link_refs[link_dict['name'][i][l]] = property_reference_setter(link_dict['multiplicity'][i][l], link_dict['name'][i][l])
 
     else:
         sys.exit('ERROR: fix the above link issues')
@@ -554,7 +581,7 @@ def build_nodes(nodes_df, var_dict): #, terms_flag):
                     out_dict2[key] = val
 
             elif key == 'property_ref':
-                property_ref = val
+                property_ref = reqs2list(val)
 
             elif key == 'nodeTerms': # and terms_flag == 'et': Check this flag value if its correct
                 val_ = get_terms(val)
@@ -577,7 +604,7 @@ def build_nodes(nodes_df, var_dict): #, terms_flag):
         properties = {}
 
         if property_ref and property_ref != '':
-            properties['$ref'] = [dbl_quote(property_ref)]
+            properties['$ref'] = [dbl_quote(p) for p in property_ref]
 
         if out_dict2['id'] in var_dict:
             for key, val in var_dict[out_dict2['id']].items():
@@ -613,8 +640,8 @@ def build_yamls(nodes_in_file, var_in_file, enum_in_file, in_dir, out_dir, exten
         if not(node_sheet) or not(var_sheet) or not(enum_sheet):
             sys.exit('ERROR: one or more than one of the sheets (Nodes, Variable & Enum) not found, exiting the program')
 
-        nodes_df     = xlsx_file.parse(sheet_name = node_sheet, index_col=None, header=0, keep_default_na=False, na_values=[''])
-        variables_df = xlsx_file.parse(sheet_name = var_sheet, index_col=None, header=0, keep_default_na=False, na_values=[''])
+        nodes_df     = xlsx_file.parse(sheet_name = node_sheet, index_col=None, header=0, keep_default_na=False, na_values=[''], false_values=['FALSE'], true_values=['TRUE'])
+        variables_df = xlsx_file.parse(sheet_name = var_sheet, index_col=None, header=0, keep_default_na=False, na_values=[''], false_values=['FALSE'], true_values=['TRUE'])
         enum_df      = xlsx_file.parse(sheet_name = enum_sheet, index_col=None, header=0, keep_default_na=False, na_values=[''])
 
         # nodes_df     = nodes_df.where(nodes_df.notnull(), None)
@@ -824,7 +851,6 @@ if __name__ == '__main__':
     out_dir      = args.out_dir
     extension    = args.extension
     terms_file   = args.terms_file
-
 
     if in_dir[-1] != '/':
         in_dir += '/'

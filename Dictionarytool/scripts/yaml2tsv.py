@@ -148,7 +148,90 @@ def load_yams(in_dir, yaml_files, terms_file):
     return yamdics, filteredyams
 
 
-def get_var_values(props, val_dict, enum_dict):
+def get_terms_tobe(node, key, k, v, tmp_terms, ctr):
+
+    if k == 'termDef':
+        for block in v:
+            prop_enum = 'property'
+
+            if node==key:
+                prop_enum = 'node'
+
+            row = {'<property_or_enum>'    : key,
+                   '<description>'         : '',
+                   '<termDef:cde_id>'      : '',
+                   '<termDef:cde_version>' : '',
+                   '<termDef:source>'      : '',
+                   '<termDef:term_id>'     : '',
+                   '<termDef:term_version>': '',
+                   '<termDef:term>'        : '',
+                   '<termDef:term_url>'    : '',
+                   '<node>'                : node,
+                   '<enum_property>'       : '',
+                   '<property/enum>'       : prop_enum
+                  }
+
+            for p,q in block.items():
+                if p == 'term':
+                    # if q != key:
+                    #     sys.exit('ERROR: termDef mismatch found for {0} on node {1}'.format(key, node))
+                    # else:
+                    row['<termDef:term>'] = q
+
+                elif p == 'source':
+                    row['<termDef:source>'] = q
+
+                elif p == 'term_id':
+                    row['<termDef:cde_id>'] = q
+
+                elif p == 'term_version':
+                    row['<termDef:cde_version>'] = q
+
+                else:
+                    row['<'+p+'>'] = q
+
+            tmp_terms[ctr] = row
+            ctr += 1
+
+    elif k == 'enumDef':
+        for block in v:
+            row = {'<property_or_enum>'    : '', #
+                   '<description>'         : '',
+                   '<termDef:cde_id>'      : '',
+                   '<termDef:cde_version>' : '',
+                   '<termDef:source>'      : '', #
+                   '<termDef:term_id>'     : '', #
+                   '<termDef:term_version>': '', #
+                   '<termDef:term>'        : '',
+                   '<termDef:term_url>'    : '',
+                   '<node>'                : node,
+                   '<enum_property>'       : key,
+                   '<property/enum>'       : 'enum'
+                  }
+
+            for p,q in block.items():
+                if p == 'enumeration':
+                    row['<property_or_enum>'] = q
+
+                elif p == 'source':
+                    row['<termDef:source>'] = q
+
+                elif p == 'term_id':
+                    row['<termDef:term_id>'] = q
+
+                elif p in ['term_version', 'version_date']:
+                    row['<termDef:term_version>'] = q
+
+                else:
+                    row['<'+p+'>'] = q
+
+            tmp_terms[ctr] = row
+            ctr += 1
+
+    return tmp_terms, ctr
+
+
+def get_var_values(props, val_dict, enum_dict, tmp_terms, ctr):
     """
     Gets the fields and values from the properties portion of the yaml file and
     adds it to the dataframe.
@@ -178,12 +261,24 @@ def get_var_values(props, val_dict, enum_dict):
               }
 
         if isinstance(val, dict):
+            enums      = val.get('enum')
+            enum_def   = val.get('enumDef')
+            dep_enum   = val.get('deprecated_enum')
+            temp_enums = {}
+
             for k, v in val.items():
-                if k in ['enum', 'deprecated_enum', 'enumDef', 'enumTerms']:
+                if k in ['deprecated_enum', 'enumDef', 'enumTerms']:
+                    continue
+
+                elif k in ['enum']: #, 'deprecated_enum', 'enumDef', 'enumTerms']: TESTING DO NOT DELETE
                     row['<type>'] = 'enum'
 
                 elif k == 'type':
-                    if isinstance(v, list):
+                    if v == 'array':
+                        row['<type>'] = 'array'
+                        print('its an Array!!!! {0} on {1}'.format(key, props[0]))
+
+                    elif isinstance(v, list):
                         row['<type>'] = ', '.join(v)
 
                     elif isinstance(v, str):
@@ -228,13 +323,32 @@ def get_var_values(props, val_dict, enum_dict):
 
                         row['<terms>'] = ', '.join(val_l_common)
 
+                elif k == 'termDef':
+                    tmp_terms, ctr = get_terms_tobe(props[0], key, k, v, tmp_terms, ctr)
+
+                elif k == 'items':
+                    for p, q in v.items():
+                        if p in [ '$ref', 'type']:
+                            row['<items>'] = q
+
+                        elif p == 'enum':
+                            row['<items>'] = 'enum'
+
+                            for e in q:
+                                enum_row = {'<node>'       : props[0],
+                                            '<property>'   : key,
+                                            '<enum_value>' : e, # validate_text(e),
+                                            '<enum_def>'   : None,
+                                            '<deprecated>' : None
+                                           }
+
+                                temp_enums[props[0]+':'+key+':'+e] = enum_row
+
+                        else:
+                            row['<'+p+'>'] = q
+
                 else:
                     row['<'+k+'>'] = v
-
-            enums      = val.get('enum')
-            enum_def   = val.get('enumDef')
-            dep_enum   = val.get('deprecated_enum')
-            temp_enums = {}
 
             if enums:
                 for e in enums:
@@ -248,8 +362,15 @@ def get_var_values(props, val_dict, enum_dict):
                     temp_enums[props[0]+':'+key+':'+e] = enum_row
 
             if enum_def:
-                for k, v in enum_def.items():
-                    temp_enums[props[0]+':'+key+':'+k]['<enum_def>'] = ', '.join(v['$ref'])
+                if isinstance(enum_def, list):
+                    tmp_terms, ctr = get_terms_tobe(props[0], key, 'enumDef', enum_def, tmp_terms, ctr)
+
+                elif isinstance(enum_def, dict):
+                    for k, v in enum_def.items():
+                        temp_enums[props[0]+':'+key+':'+k]['<enum_def>'] = ', '.join(v['$ref'])
+
+                else:
+                    print('Something is really weird about enum_Def')
 
             if dep_enum:
                 for e in dep_enum:
@@ -267,7 +388,7 @@ def get_var_values(props, val_dict, enum_dict):
 
         val_dict[props[0]+':'+key] = row
 
-    return val_dict, enum_dict
+    return val_dict, enum_dict, tmp_terms, ctr
 
 
 def get_links(links, row):
@@ -301,7 +422,7 @@ def get_links(links, row):
                     sub_label.append(l['label'])
                     sub_target.append(l['target_type'])
                     sub_multi.append(l['multiplicity'])
-                    sub_req.append(str(l['required']))
+                    sub_req.append(str(l['required']).title())
 
                 l_name_str.append(', '.join(sub_name))
                 l_backref_str.append(', '.join(sub_backref))
@@ -309,8 +430,8 @@ def get_links(links, row):
                 l_target_str.append(', '.join(sub_target))
                 l_multiplicity_str.append(', '.join(sub_multi))
                 l_required_str.append(', '.join(sub_req))
-                g_exclusive_str.append(str(link['exclusive']))
-                g_required_str.append(str(link['required']))
+                g_exclusive_str.append(str(link['exclusive']).title())
+                g_required_str.append(str(link['required']).title())
 
             else:
                 try:
@@ -319,7 +440,7 @@ def get_links(links, row):
                     l_label_str.append(link['label'])
                     l_target_str.append(link['target_type'])
                     l_multiplicity_str.append(link['multiplicity'])
-                    l_required_str.append(str(link['required']))
+                    l_required_str.append(str(link['required']).title())
                     g_exclusive_str.append('')
                     g_required_str.append('')
 
@@ -338,7 +459,7 @@ def get_links(links, row):
     return row
 
 
-def get_node_values(temp_node, node_dict):
+def get_node_values(temp_node, node_dict, tmp_terms, ctr):
     """
     Gets the values of the fields in the nodes schema, inputs their values into
     the row dictionary. Then appends dictionary to the nodes dataframe.
@@ -373,7 +494,14 @@ def get_node_values(temp_node, node_dict):
             elif k == 'uniqueKeys':
                 row['<'+k+'>'] = ' | '.join([', '.join(i) for i in v])
 
+            elif k == 'termDef':
+                tmp_terms, ctr = get_terms_tobe(node['id'], node['id'], k, v, tmp_terms, ctr)
+
             else:
+
+                if v in [False, True]:
+                    v = str(v).title()
+
                 row['<'+k+'>'] = v
 
     row     = get_links(node['links'], row)
@@ -400,7 +528,7 @@ def get_node_values(temp_node, node_dict):
 
     node_dict[node['id']] = row
 
-    return node_dict
+    return node_dict, tmp_terms, ctr
 
 
 def export_nodes_props(yamdics, out_dir, dictionary, extension):
@@ -412,21 +540,25 @@ def export_nodes_props(yamdics, out_dir, dictionary, extension):
 
     # create the nodes tsv
     node_dict = {}
+    tmp_terms = {}
+    ctr = 1
 
     for dic in yamdics:
-        node_dict = get_node_values(dic, node_dict)
-
-    ndf = pd.DataFrame.from_dict(node_dict, orient='index')
+        node_dict, tmp_terms, ctr = get_node_values(dic, node_dict, tmp_terms, ctr)
 
     # create the properties & enum tsvs
     val_dict  = {}
     enum_dict = {}
 
-    for dic in yamprops:
-        val_dict, enum_dict = get_var_values(dic, val_dict, enum_dict)
+    for props in yamprops:
+        val_dict, enum_dict, tmp_terms, ctr = get_var_values(props, val_dict, enum_dict, tmp_terms, ctr)
 
+    ndf = pd.DataFrame.from_dict(node_dict, orient='index')
     vdf = pd.DataFrame.from_dict(val_dict, orient='index')
     edf = pd.DataFrame.from_dict(enum_dict, orient='index')
+
+    if tmp_terms:
+        ttdf = pd.DataFrame.from_dict(tmp_terms, orient='index')
 
     if extension == 'xlsx':
         writer = pd.ExcelWriter('{0}nodes_schema_{1}.xlsx'.format(out_dir, dictionary), engine = 'xlsxwriter')
@@ -437,10 +569,20 @@ def export_nodes_props(yamdics, out_dir, dictionary, extension):
 
         writer.save()
 
+        if tmp_terms:
+            t_writer = pd.ExcelWriter('{0}terms_to_be_migrated_{1}.xlsx'.format(out_dir, dictionary), engine = 'xlsxwriter')
+
+            ttdf.to_excel(t_writer, index = False, sheet_name = 'terms_to_be_migrated')
+
+            t_writer.save()
+
     else:
         ndf.to_csv('{0}nodes_{1}.{2}'.format(out_dir, dictionary, extension), sep = '\t', index = False, quoting = None)
         vdf.to_csv('{0}variables_{1}.{2}'.format(out_dir, dictionary, extension), sep = '\t', index = False, quoting = None)
         edf.to_csv('{0}enums_{1}.{2}'.format(out_dir, dictionary, extension), sep = '\t', index = False, quoting = None)
+
+        if tmp_terms:
+            ttdf.to_csv('{0}terms_to_be_migrated_{1}.{2}'.format(out_dir, dictionary, extension), sep = '\t', index = False, quoting = None)
 
 
     '''

@@ -108,7 +108,8 @@ def validate_name(string, name_type, node_name):
         if match:
             sys.exit('Illegal character {0} found in variable name {1} in node {2}. Only lowercase letters and underscore allowed.'.format(match.string, string, node_name))
 
-    return string.lower()
+    #return string.lower()
+    return string
 
 
 def get_terms(terms):
@@ -264,13 +265,13 @@ def build_enums(enum_df):
                     enum_dict[node][field]['deprecated_enum'].append(enum_val)
 
                 if enum_def == 'common':
-                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': [dbl_quote('_terms.yaml#/'+re.sub('[\W]+', '', enum_val.lower().strip().replace(' ', '_'))+'/'+enum_def)]}
+                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': dbl_quote('_terms.yaml#/'+re.sub('[\W]+', '', enum_val.lower().strip().replace(' ', '_'))+'/'+enum_def)}
 
                 elif enum_def == 'specific':
-                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': [dbl_quote('_terms.yaml#/'+re.sub('[\W]+', '', enum_val.lower().strip().replace(' ', '_'))+'/'+node+'/'+field)]}
+                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': dbl_quote('_terms.yaml#/'+re.sub('[\W]+', '', enum_val.lower().strip().replace(' ', '_'))+'/'+node+'/'+field)}
 
                 elif enum_def:
-                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': [dbl_quote(stripper(x)) for x in enum_def.split(',')]}
+                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': dbl_quote(stripper(x)) for x in enum_def.split(',')}
 
     # Validate deprecated enums present in enum section
     missing_deprecated_enums = []
@@ -328,22 +329,31 @@ def build_properties(variables_df, enum_df):
                     field = validate_name(val, 'property', node)
 
                 elif key == 'terms':
-                    val_ = reqs2list(val.lower())
+                    #val_ = reqs2list(val.lower())
+                    val_ = reqs2list(val)
 
                     for v in val_:
-                        if '$ref' not in temp_var:
-                            temp_var['$ref'] = []
+                        if '_terms.yaml' in v:
+                            if 'term' not in temp_var:
+                                temp_var['term'] = {'$ref' :''} # []
 
-                        if v == 'common':
-                            temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v))
+                            if v == 'common':
+                                #temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v))
+                                temp_var['term']['$ref'] = dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+v)
 
-                        elif v == 'specific':
-                            temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v))
+                            elif v == 'specific':
+                                #temp_var['$ref'].append(dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v))
+                                temp_var['term']['$ref'] = dbl_quote('_terms.yaml#/'+field.lower().strip().replace(' ', '_')+'/'+node+'/'+v)
 
-                        elif v:
-                            temp_var['$ref'].append(dbl_quote(v))
+                            elif v:
+                                #temp_var['$ref'].append(dbl_quote(v))
+                                temp_var['term']['$ref'] = dbl_quote(v)
 
+                        else:
+                            if '$ref' not in temp_var:
+                                temp_var['$ref'] = ''
 
+                            temp_var['$ref'] = dbl_quote(v)
                         '''
                         # Do not delete - for old format
                         if '_terms.yaml' in v:
@@ -590,7 +600,7 @@ def build_nodes(nodes_df, var_dict): #, terms_flag):
                     out_dict2[key] = val
 
             elif key == 'property_ref':
-                property_ref = reqs2list(val)
+                property_ref = val
 
             elif key == 'nodeTerms': # and terms_flag == 'et': Check this flag value if its correct
                 val_ = get_terms(val)
@@ -613,7 +623,7 @@ def build_nodes(nodes_df, var_dict): #, terms_flag):
         properties = {}
 
         if property_ref and property_ref != '':
-            properties['$ref'] = [dbl_quote(p) for p in property_ref]
+            properties['$ref'] = dbl_quote(property_ref)
 
         if out_dict2['id'] in var_dict:
             for key, val in var_dict[out_dict2['id']].items():

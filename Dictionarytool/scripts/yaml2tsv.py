@@ -10,6 +10,7 @@ from datetime import datetime
 from ruamel.yaml import YAML
 from collections import defaultdict
 from schema_utils import stripper
+from ruamel.yaml.constructor import DuplicateKeyError
 
 '''
 #needs to be investigated
@@ -143,7 +144,14 @@ def load_yams(in_dir, yaml_files, terms_file):
 
     for y in filteredyams:
         with open(y) as yam:
-            yamdics.append(defaultdict(lambda: None, yaml.load(yam)))
+            try:
+                yamdics.append(defaultdict(lambda: None, yaml.load(yam)))
+
+            except DuplicateKeyError as e:
+                print('ERROR: found duplicate key in {0}, check detailed error below: \n\n\n {1}'.format(y, e))
+
+            except Exception as e:
+                print('ERROR: error reading {0}. check detailed error below: \n\n\n {1}'.format(y, e))
 
     return yamdics, filteredyams
 
@@ -382,6 +390,9 @@ def get_var_values(props, val_dict, enum_dict, tmp_terms, ctr):
                                }
 
                     temp_enums[props[0]+':'+key+':'+'dep_'+e] = enum_row
+
+        else:
+            sys.exit('The property {0} on node {1} is not defined properly. \n Only $ref can be defined as list in the yaml, all other properties should have atleast one key : value pair under it'.format(key, props[0]))
 
         for k, v in temp_enums.items():
             enum_dict[k] = v

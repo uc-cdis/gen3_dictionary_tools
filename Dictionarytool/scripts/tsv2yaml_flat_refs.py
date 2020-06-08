@@ -371,8 +371,8 @@ def build_properties(variables_df, enum_df):
                         '''
 
                 elif key == 'description':
-                    if val:
-                        val = fss(validate_desc(val))
+                    # if val:
+                    #     val = fss(validate_desc(val))
 
                     temp_var[key] = val
 
@@ -388,6 +388,12 @@ def build_properties(variables_df, enum_df):
                 elif key == 'type' and val != 'enum':
                     val_ = reqs2list(val)
 
+                    if 'array' in val_ and '<items>' not in var.keys():
+                        sys.exit('ERROR: If the arrays are defined for the first time, please add "<items>" column in variables sheet and specify type of array e.g. enum, string, etc. check property {0} on node {1}\n\n'.format(field, node))
+
+                    if 'array' in val_ and '<items>' in var.keys() and var['<items>'] == '':
+                        sys.exit('ERROR: The property {0} on node {1} is defined as array, please specify type of array (can not be left blank) in "<items>" column in variables sheet.\n\n'.format(field, node))
+
                     if len(val_) == 1:
                         temp_var[key] = val_[0]
 
@@ -396,18 +402,39 @@ def build_properties(variables_df, enum_df):
 
                         for v in val_:
                             if v == 'null':
-                                v= dbl_quote(v)
+                                v = dbl_quote(v)
 
                             temp_type.append({'type' : v})
 
                         temp_var['oneOf'] = temp_type
 
                 elif key == 'items':
-                    if val in ['string', 'number', 'integer', 'null', 'boolean']:
-                        temp_var[key] = {'type': val}
+                    # if val in ['string', 'number', 'integer', 'null', 'boolean']:
+                    #     temp_var[key] = {'type': val}
+                    #
+                    # elif val == 'enum':
+                    #     temp_var[key] = {val : []}
 
-                    elif val == 'enum':
-                        temp_var[key] = {val : []}
+                    val_ = reqs2list(val)
+
+                    if len(val_) == 1:
+                        temp_var[key] = val_[0]
+                        if val_[0] in ['string', 'number', 'integer', 'null', 'boolean']:
+                            temp_var[key] = {'type': val_[0]}
+
+                        elif val_[0] == 'enum':
+                            temp_var[key] = {val_[0] : []}
+
+                    else:
+                        temp_type = []
+
+                        for v in val_:
+                            if v == 'null':
+                                v = dbl_quote(v)
+
+                            temp_type.append({'type' : v})
+
+                        temp_var[key] = {'oneOf': temp_type}
 
                 elif key in ['minItems', 'maxItems', 'uniqueItems']:
                     if 'items' in temp_var and temp_var['items'] != {}:
@@ -442,7 +469,14 @@ def build_properties(variables_df, enum_df):
         if ('type' not in temp_var or temp_var['type'] == 'array') and node in enum_dict and field in enum_dict[node]:
             for k,v in enum_dict[node][field].items():
                 if k == 'enum' and 'type' in temp_var and temp_var['type'] == 'array':
-                    temp_var['items'][k] = v
+                    try:
+                        temp_var['items'][k] = v
+
+                    except KeyError as e:
+                        sys.exit('ERROR: If the arrays are defined for the first time, please add "<items>" column in variables sheet and specify type of array e.g. enum, string, etc. check property {0} on node {1} & detailed error below:  \n\n {0}'.format(field, node, e))
+
+                    except Exception as e:
+                        sys.exit('ERROR: error during array conversion. check property {0} on node {1} & detailed error below: \n\n {1}'.format(field, node, e))
 
                 else:
                     temp_var[k] = v
@@ -574,8 +608,8 @@ def build_nodes(nodes_df, var_dict): #, terms_flag):
                 out_dict2[key] = dbl_quote(validate_name(val, 'node', val))
 
             elif key == 'description':
-                if val:
-                    val = fss(validate_desc(val))
+                # if val:
+                #     val = fss(validate_desc(val))
 
                 out_dict2[key] = val
 
@@ -786,8 +820,8 @@ def build_terms(terms_in_file, in_dir, out_dir, extension):
                 enum = val
 
             elif key == 'description':
-                if val:
-                    val = fss(validate_desc(val))
+                # if val:
+                #     val = fss(validate_desc(val))
 
                 out_dict[key] = val
 
@@ -795,8 +829,8 @@ def build_terms(terms_in_file, in_dir, out_dir, extension):
                 key_ = key.replace('termDef:','')
 
                 if key_ == 'term':
-                    if val:
-                        val = fss(validate_desc(val))
+                    # if val:
+                    #     val = fss(validate_desc(val))
 
                     termdef[key_] = val
 
@@ -813,6 +847,13 @@ def build_terms(terms_in_file, in_dir, out_dir, extension):
                     except:
                         termdef[key_] = val
 
+                elif key_ == 'cde_version':
+                    try:
+                        termdef[key_] = float(val)
+
+                    except:
+                        termdef[key_] = val
+
                 elif key_ in ['term_id' , 'term_version']:
                     if val:
                         termdef[key_] = val
@@ -823,8 +864,9 @@ def build_terms(terms_in_file, in_dir, out_dir, extension):
         out_dict['termDef'] = termdef
 
         if property_nm not in dict_of_terms:
-            dict_of_terms[property_nm] = {}
+            dict_of_terms[property_nm] = out_dict
 
+        '''
         if node == 'common':
             dict_of_terms[property_nm][node] = out_dict
 
@@ -835,6 +877,7 @@ def build_terms(terms_in_file, in_dir, out_dir, extension):
             else:
                 dict_of_terms[property_nm][node]       = {}
                 dict_of_terms[property_nm][node][enum] = out_dict
+        '''
 
     yaml = YAML()
     yaml.default_flow_style = False
@@ -863,7 +906,7 @@ def build_terms(terms_in_file, in_dir, out_dir, extension):
 if __name__ == '__main__':
 
     temp_st_time = datetime.now()
-    
+
     args         = get_params()
 
     # terms_flag   = args.terms_flag

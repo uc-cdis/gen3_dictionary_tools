@@ -849,7 +849,11 @@ def export_terms_future(terms, in_dir, out_dir, dictionary, extension):
                 for i,j in v.items():
                     if i == 'termDef':
                         for m,n in j.items():
-                            row['<'+i+':'+m+'>'] = n
+                            if n:
+                                row['<'+i+':'+m+'>'] = str(n)
+
+                            else:
+                                row['<'+i+':'+m+'>'] = n
 
                     elif i == 'description':
                         if j:
@@ -873,8 +877,12 @@ def export_terms_future(terms, in_dir, out_dir, dictionary, extension):
                     for c,d in j.items():
                         if c == 'termDef':
                             for m,n in d.items():
-                                row['<'+c+':'+m+'>'] = n
+                                if n:
+                                    row['<'+c+':'+m+'>'] = str(n)
 
+                                else:
+                                    row['<'+c+':'+m+'>'] = n
+                        
                         elif c == 'description':
                             if d:
                                 row['<'+c+'>'] = ' '.join(d.strip().split(' '))

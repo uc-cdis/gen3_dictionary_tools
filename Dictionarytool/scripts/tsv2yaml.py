@@ -664,9 +664,10 @@ def build_yamls(nodes_in_file, var_in_file, enum_in_file, in_dir, out_dir, exten
         try:
             enum_df  = pd.read_csv(enum_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''])
             # enum_df  = enum_df.where(enum_df.notnull(), None)
-        except UnicodeDecodeError:
+        except UnicodeDecodeError as e:
             try:
                 enum_df  = pd.read_csv(enum_in_file, index_col=None, header=0, sep = '\t', keep_default_na=False, na_values=[''], encoding='latin-1')
+                print("\t{0} file read in using Latin Encoding due to UnicodeDecodeError: {1}".format(enum_in_file,e))
             except pd.io.common.EmptyDataError:
                 enum_df  = None
 

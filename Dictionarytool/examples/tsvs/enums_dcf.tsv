@@ -1,0 +1,733 @@
+<node>	<property>	<enum_value>	<enum_def>	<deprecated>
+acknowledgement	type	acknowledgement		
+aggregated_genotyping_array	data_category	SNP Array Data		
+aggregated_genotyping_array	data_type	Aggregated SNP Alleles		
+aggregated_genotyping_array	data_type	Individual SNP Alleles		
+aggregated_genotyping_array	data_format	PED		
+aggregated_genotyping_array	data_format	VCF		
+aggregated_genotyping_array	data_format	IND		
+aggregated_genotyping_array	experimental_strategy	SNP Array Genotyping		
+aggregated_genotyping_array	platform	Illumina Infinium HumanExome BeadChip		
+aggregated_genotyping_array	platform	Illumina OMNI 5M SNP Array		
+aggregated_genotyping_array	platform	Illumina OMNI 2.5M SNP Array		
+aggregated_genotyping_array	platform	Affymetrix Genome-Wide Human SNP Array 6.0		
+aligned_reads	data_category	Sequencing Data		
+aligned_reads	data_category	Sequencing Reads		
+aligned_reads	data_category	Raw Sequencing Data		
+aligned_reads	data_type	Aligned Reads		
+aligned_reads	data_format	BAM		
+aligned_reads	data_format	CRAM		
+aligned_reads	experimental_strategy	WGS		
+aligned_reads	experimental_strategy	WXS		
+aligned_reads	experimental_strategy	Low Pass WGS		
+aligned_reads	experimental_strategy	Validation		
+aligned_reads	experimental_strategy	RNA-Seq		
+aligned_reads	experimental_strategy	miRNA-Seq		
+aligned_reads	experimental_strategy	Total RNA-Seq		
+aligned_reads_index	type	aligned_reads_index		
+aligned_reads_index	data_category	Sequencing Data		
+aligned_reads_index	data_category	Sequencing Reads		
+aligned_reads_index	data_category	Raw Sequencing Data		
+aligned_reads_index	data_type	Aligned Reads Index		
+aligned_reads_index	data_format	BAI		
+alignment_cocleaning_workflow	type	alignment_cocleaning_workflow		
+alignment_cocleaning_workflow	workflow_type	BWA with Mark Duplicates and Cocleaning		
+alignment_workflow	type	alignment_workflow		
+alignment_workflow	workflow_type	STAR		
+alignment_workflow	workflow_type	BWA-aln		
+alignment_workflow	workflow_type	BWA-mem		
+alignment_workflow	workflow_type	spinnaker		
+aliquot	analyte_type_id	D		
+aliquot	analyte_type_id	E		
+aliquot	analyte_type_id	G		
+aliquot	analyte_type_id	H		
+aliquot	analyte_type_id	R		
+aliquot	analyte_type_id	S		
+aliquot	analyte_type_id	T		
+aliquot	analyte_type_id	W		
+aliquot	analyte_type_id	X		
+aliquot	analyte_type_id	Y		
+copy_number_estimate	data_category	Copy Number Variation		
+copy_number_estimate	data_type	Gene Level Copy Number		
+copy_number_estimate	data_type	Gene Level Copy Number Scores		
+copy_number_estimate	data_type	Cohort Level Copy Number Scores		
+copy_number_estimate	data_format	TXT		
+copy_number_estimate	experimental_strategy	Genotyping Array		
+copy_number_estimate	experimental_strategy	Targeted Sequencing		
+copy_number_estimate	experimental_strategy	WGS		
+copy_number_estimate	platform	Affymetrix SNP 6.0		
+copy_number_estimate	platform	Illumina		
+copy_number_estimate	platform	Ion Torrent		
+copy_number_segment	data_category	Copy Number Variation		
+copy_number_segment	data_type	Copy Number Segment		
+copy_number_segment	data_type	Masked Copy Number Segment		
+copy_number_segment	data_format	TXT		
+copy_number_segment	experimental_strategy	Genotyping Array		
+copy_number_segment	experimental_strategy	Targeted Sequencing		
+copy_number_segment	platform	Affymetrix SNP 6.0		
+copy_number_segment	platform	Illumina		
+copy_number_variation_workflow	workflow_type	GISTIC - Copy Number Score		
+copy_number_variation_workflow	workflow_type	GISTIC - Arm Level Copy Number		
+copy_number_variation_workflow	workflow_type	GISTIC - Focal Deletion		
+copy_number_variation_workflow	workflow_type	GISTIC - Focal Amplification		
+demographic	gender	female		
+demographic	gender	male		
+demographic	gender	unknown		
+demographic	gender	unspecified		
+demographic	gender	not reported		
+demographic	race	white		
+demographic	race	american indian or alaska native		
+demographic	race	black or african american		
+demographic	race	asian		
+demographic	race	native hawaiian or other pacific islander		
+demographic	race	other		
+demographic	race	Unknown		
+demographic	race	not reported		
+demographic	race	not allowed to collect		
+demographic	ethnicity	hispanic or latino		
+demographic	ethnicity	not hispanic or latino		
+demographic	ethnicity	Unknown		
+demographic	ethnicity	not reported		
+demographic	ethnicity	not allowed to collect		
+diagnosis	age_at_diagnosis_gt89	Yes		
+diagnosis	age_at_diagnosis_gt89	No		
+gene_expression	data_category	Transcriptome Profiling		
+gene_expression	data_type	Gene Expression Quantification		
+gene_expression	data_type	Gene Expression Normalization		
+gene_expression	data_format	TXT		
+gene_expression	data_format	TSV		
+gene_expression	data_format	CSV		
+gene_expression	data_format	GCT		
+gene_expression	data_format	RES		
+gene_expression	data_format	TDF		
+gene_expression	data_format	GCTX		
+gene_expression	experimental_strategy	RNA-Seq		
+gene_expression	experimental_strategy	Total RNA-Seq		
+gene_expression	experimental_strategy	Microarray		
+genotyping_array	data_category	Genotyping Array Data		
+genotyping_array	data_type	Genotyping Raw Intensity		
+genotyping_array	data_format	IDAT		
+genotyping_array	data_format	GTC		
+genotyping_array	data_format	GCT		
+genotyping_array	data_format	CEL		
+genotyping_array	experimental_strategy	Genotyping Array		
+genotyping_array	platform	Illumina Infinium HumanExome BeadChip		
+genotyping_array	platform	Illumina OMNI 5M SNP Array		
+genotyping_array	platform	Illumina OMNI 2.5M SNP Array		
+genotyping_array	platform	Affymetrix Genome-Wide Human SNP Array 6.0		
+genotyping_array_workflow	type	genotyping_array_workflow		
+genotyping_array_workflow	workflow_type	Birdseed Genotyping		
+keyword	type	keyword		
+mirna_microarray	data_category	Transcriptome Profiling		
+mirna_microarray	data_type	miRNA Expression Quantification		
+mirna_microarray	data_format	TXT		
+mirna_microarray	data_format	TSV		
+mirna_microarray	data_format	CSV		
+mirna_microarray	experimental_strategy	RNA-microarray		
+mrna_microarray	data_category	Transcriptome Profiling		
+mrna_microarray	data_type	mRNA Expression Quantification		
+mrna_microarray	data_format	TXT		
+mrna_microarray	data_format	TSV		
+mrna_microarray	data_format	CSV		
+mrna_microarray	data_format	CEL		
+mrna_microarray	experimental_strategy	RNA-microarray		
+mzml_protein_mass_spectrometry	data_category	Proteome		
+mzml_protein_mass_spectrometry	data_format	TXT		
+mzml_protein_mass_spectrometry	data_format	TSV		
+mzml_protein_mass_spectrometry	data_format	CSV		
+mzml_protein_mass_spectrometry	data_format	GCT		
+mzml_protein_mass_spectrometry	data_format	RAW		
+mzml_protein_mass_spectrometry	data_format	MZID.GZ		
+mzml_protein_mass_spectrometry	data_format	MZML.GZ		
+mzml_protein_mass_spectrometry	experimental_strategy	TMT10		
+mzml_protein_mass_spectrometry	experimental_strategy	iTRAQ4		
+mzml_protein_mass_spectrometry	experimental_strategy	Label Free		
+oncomap_assay	strand	+		
+oncomap_assay	strand	-		
+oncomap_assay	variant_classfication	Missense_Mutation		
+oncomap_assay	variant_classfication	In_Frame_Del		
+oncomap_assay	variant_classfication	Frame_Shift_Del		
+oncomap_assay	variant_classfication	Nonsense_Mutation		
+oncomap_assay	variant_classfication	Frame_Shift_Ins		
+oncomap_assay	variant_classfication	In_Frame_Ins		
+oncomap_assay	variant_classfication	Silent		
+oncomap_panel	variant_type	SNP		
+oncomap_panel	variant_type	DEL		
+oncomap_panel	variant_type	TNP		
+oncomap_panel	variant_type	INS		
+oncomap_panel	variant_type	DNP		
+oncomap_panel	variant_type	ONP		
+oncomap_panel	transcript_strand	+		
+oncomap_panel	transcript_strand	-		
+project	availability_type	Open		
+project	availability_type	Restricted		
+project	state	open		
+project	state	review		
+project	state	submitted		
+project	state	processing		
+project	state	closed		
+project	state	legacy		
+protein_expression	data_category	Proteome		
+protein_expression	data_format	TXT		
+protein_expression	data_format	TSV		
+protein_expression	data_format	CSV		
+protein_expression	data_format	GCT		
+protein_expression	data_format	RAW		
+protein_expression	data_format	MZID.GZ		
+protein_expression	data_format	MZML.GZ		
+protein_expression	experimental_strategy	TMT10		
+protein_expression	experimental_strategy	iTRAQ4		
+protein_expression	experimental_strategy	Label Free		
+psm_protein_mass_spectrometry	data_category	Proteome		
+psm_protein_mass_spectrometry	data_format	TXT		
+psm_protein_mass_spectrometry	data_format	TSV		
+psm_protein_mass_spectrometry	data_format	CSV		
+psm_protein_mass_spectrometry	data_format	GCT		
+psm_protein_mass_spectrometry	data_format	RAW		
+psm_protein_mass_spectrometry	data_format	MZID.GZ		
+psm_protein_mass_spectrometry	data_format	MZML.GZ		
+psm_protein_mass_spectrometry	experimental_strategy	TMT10		
+psm_protein_mass_spectrometry	experimental_strategy	iTRAQ4		
+psm_protein_mass_spectrometry	experimental_strategy	Label Free		
+publication	type	publication		
+raw_protein_mass_spectrometry	data_category	Proteome		
+raw_protein_mass_spectrometry	data_format	TXT		
+raw_protein_mass_spectrometry	data_format	TSV		
+raw_protein_mass_spectrometry	data_format	CSV		
+raw_protein_mass_spectrometry	data_format	GCT		
+raw_protein_mass_spectrometry	data_format	RAW		
+raw_protein_mass_spectrometry	data_format	MZID.GZ		
+raw_protein_mass_spectrometry	data_format	MZML.GZ		
+raw_protein_mass_spectrometry	experimental_strategy	TMT10		
+raw_protein_mass_spectrometry	experimental_strategy	iTRAQ4		
+raw_protein_mass_spectrometry	experimental_strategy	Label Free		
+read_group	instrument_model	454 GS FLX Titanium		
+read_group	instrument_model	AB SOLiD 4		
+read_group	instrument_model	AB SOLiD 2		
+read_group	instrument_model	AB SOLiD 3		
+read_group	instrument_model	Complete Genomics		
+read_group	instrument_model	Illumina HiSeq X Ten		
+read_group	instrument_model	Illumina HiSeq X Five		
+read_group	instrument_model	Illumina Genome Analyzer II		
+read_group	instrument_model	Illumina Genome Analyzer IIx		
+read_group	instrument_model	Illumina HiSeq 2000		
+read_group	instrument_model	Illumina HiSeq 2500		
+read_group	instrument_model	Illumina HiSeq 4000		
+read_group	instrument_model	Illumina MiSeq		
+read_group	instrument_model	Illumina NextSeq 500		
+read_group	instrument_model	Illumina NextSeq 550		
+read_group	instrument_model	Illumina NovaSeq 6000		
+read_group	instrument_model	Ion Torrent PGM		
+read_group	instrument_model	Ion Torrent Proton		
+read_group	instrument_model	PacBio RS		
+read_group	instrument_model	Other		
+read_group	library_selection	Hybrid Selection		
+read_group	library_selection	PCR		
+read_group	library_selection	Affinity Enrichment		
+read_group	library_selection	Poly-T Enrichment		
+read_group	library_selection	Random		
+read_group	library_selection	rRNA Depletion		
+read_group	library_selection	miRNA Size Fractionation		
+read_group	library_selection	Other		
+read_group	library_strand	Unstranded		
+read_group	library_strand	First Stranded		
+read_group	library_strand	Second Stranded		
+read_group	library_strand	Not Applicable		
+read_group	library_strategy	WGS		
+read_group	library_strategy	WXS		
+read_group	library_strategy	RNA-Seq		
+read_group	library_strategy	ChIP-Seq		
+read_group	library_strategy	miRNA-Seq		
+read_group	library_strategy	Bisulfite-Seq		
+read_group	library_strategy	Targeted Sequencing		
+read_group	library_strategy	Validation		
+read_group	library_strategy	Amplicon		
+read_group	library_strategy	Other		
+read_group	platform	Illumina		
+read_group	platform	SOLiD		
+read_group	platform	LS454		
+read_group	platform	Ion Torrent		
+read_group	platform	Complete Genomics		
+read_group	platform	PacBio		
+read_group	platform	Other		
+read_group	target_capture_kit	Custom AmpliSeq Cancer Hotspot GENIE-MDA Augmented Panel v1 - 46 Genes		
+read_group	target_capture_kit	Custom GENIE-DFCI OncoPanel - 275 Genes		
+read_group	target_capture_kit	Custom GENIE-DFCI Oncopanel - 300 Genes		
+read_group	target_capture_kit	Custom GENIE-DFCI Oncopanel - 447 Genes		
+read_group	target_capture_kit	Custom HaloPlex DLBCL Panel - 370 Genes		
+read_group	target_capture_kit	Custom Ion AmpliSeq Hotspot GENIE-MOSC3 Augmented Panel - 74 Genes		
+read_group	target_capture_kit	Custom Large Construct Capture TARGET-OS Panel - 8 Genes		
+read_group	target_capture_kit	Custom MSK IMPACT Panel - 341 Genes		
+read_group	target_capture_kit	Custom MSK IMPACT Panel - 410 Genes		
+read_group	target_capture_kit	Custom MSK IMPACT Panel - 468 Genes		
+read_group	target_capture_kit	Custom Myeloid GENIE-VICC Panel - 37 Genes		
+read_group	target_capture_kit	Custom PGDX SureSelect CancerSelect VAREPOP-APOLLO Panel - 203 Genes		
+read_group	target_capture_kit	Custom PGDX SureSelect CancerSelect VAREPOP-APOLLO Panel - 88 Genes		
+read_group	target_capture_kit	Custom SeqCap EZ HGSC VCRome v2.1 ER Augmented v1		
+read_group	target_capture_kit	Custom SeqCap EZ HGSC VCRome v2.1 ER Augmented v2		
+read_group	target_capture_kit	Custom SeqCap EZ TARGET-OS Panel - 7.0 Mb		
+read_group	target_capture_kit	Custom Solid Tumor GENIE-VICC Panel - 34 Genes		
+read_group	target_capture_kit	Custom SureSelect CGCI-BLGSP Panel - 4.6 Mb		
+read_group	target_capture_kit	Custom SureSelect GENIE-UHN Panel - 555 Genes		
+read_group	target_capture_kit	Custom SureSelect TARGET-AML_NBL_WT Panel - 2.8 Mb		
+read_group	target_capture_kit	Foundation Medicine T5a Panel - 322 Genes		
+read_group	target_capture_kit	Foundation Medicine T7 Panel - 429 Genes		
+read_group	target_capture_kit	Ion AmpliSeq Cancer Hotspot Panel v2		
+read_group	target_capture_kit	Ion AmpliSeq Comprehensive Cancer Panel		
+read_group	target_capture_kit	Nextera Rapid Capture Exome v1.2		
+read_group	target_capture_kit	SeqCap EZ HGSC VCRome v2.1		
+read_group	target_capture_kit	SureSelect Human All Exon v3		
+read_group	target_capture_kit	SureSelect Human All Exon v5		
+read_group	target_capture_kit	TruSeq Amplicon Cancer Panel		
+read_group	target_capture_kit	TruSeq Exome Enrichment - 62 Mb		
+read_group	target_capture_kit	TruSight Myeloid Sequencing Panel		
+read_group	target_capture_kit	Not Applicable		
+read_group	target_capture_kit	Unknown		
+read_group_qc	type	read_group_qc		
+read_group_qc	workflow_type	Read Group Quality Control		
+rna_expression_workflow	type	rna_expression_workflow		
+rna_expression_workflow	workflow_type	DEXSeq		
+rna_expression_workflow	workflow_type	HTSeq - FPKM		
+rna_expression_workflow	workflow_type	HTSeq - FPKM-UQ		
+rna_expression_workflow	workflow_type	HTSeq - Counts		
+rna_expression_workflow	workflow_type	Cufflinks		
+rna_expression_workflow	workflow_type	Kallisto		
+rna_expression_workflow	workflow_type	RNASeQC		
+rna_expression_workflow	workflow_type	RSEM		
+rna_expression_workflow	workflow_type	Flux		
+rna_expression_workflow	workflow_type	ASE		
+sample	biospecimen_anatomic_site	Abdomen		
+sample	biospecimen_anatomic_site	Abdominal Wall		
+sample	biospecimen_anatomic_site	Acetabulum		
+sample	biospecimen_anatomic_site	Adenoid		
+sample	biospecimen_anatomic_site	Adipose		
+sample	biospecimen_anatomic_site	Adrenal		
+sample	biospecimen_anatomic_site	Alveolar Ridge		
+sample	biospecimen_anatomic_site	Amniotic Fluid		
+sample	biospecimen_anatomic_site	Ampulla Of Vater		
+sample	biospecimen_anatomic_site	Anal Sphincter		
+sample	biospecimen_anatomic_site	Ankle		
+sample	biospecimen_anatomic_site	Anorectum		
+sample	biospecimen_anatomic_site	Antecubital Fossa		
+sample	biospecimen_anatomic_site	Antrum		
+sample	biospecimen_anatomic_site	Anus		
+sample	biospecimen_anatomic_site	Aorta		
+sample	biospecimen_anatomic_site	Aortic Body		
+sample	biospecimen_anatomic_site	Appendix		
+sample	biospecimen_anatomic_site	Aqueous Fluid		
+sample	biospecimen_anatomic_site	Arm		
+sample	biospecimen_anatomic_site	Artery		
+sample	biospecimen_anatomic_site	Ascending Colon		
+sample	biospecimen_anatomic_site	Ascending Colon Hepatic Flexure		
+sample	biospecimen_anatomic_site	Auditory Canal		
+sample	biospecimen_anatomic_site	Autonomic Nervous System		
+sample	biospecimen_anatomic_site	Axilla		
+sample	biospecimen_anatomic_site	Back		
+sample	biospecimen_anatomic_site	Bile Duct		
+sample	biospecimen_anatomic_site	Bladder		
+sample	biospecimen_anatomic_site	Blood		
+sample	biospecimen_anatomic_site	Blood Vessel		
+sample	biospecimen_anatomic_site	Bone		
+sample	biospecimen_anatomic_site	Bone Marrow		
+sample	biospecimen_anatomic_site	Bowel		
+sample	biospecimen_anatomic_site	Brain		
+sample	biospecimen_anatomic_site	Brain Stem		
+sample	biospecimen_anatomic_site	Breast		
+sample	biospecimen_anatomic_site	Broad Ligament		
+sample	biospecimen_anatomic_site	Bronchiole		
+sample	biospecimen_anatomic_site	Bronchus		
+sample	biospecimen_anatomic_site	Brow		
+sample	biospecimen_anatomic_site	Buccal Cavity		
+sample	biospecimen_anatomic_site	Buccal Mucosa		
+sample	biospecimen_anatomic_site	Buttock		
+sample	biospecimen_anatomic_site	Calf		
+sample	biospecimen_anatomic_site	Capillary		
+sample	biospecimen_anatomic_site	Cardia		
+sample	biospecimen_anatomic_site	Carina		
+sample	biospecimen_anatomic_site	Carotid Artery		
+sample	biospecimen_anatomic_site	Carotid Body		
+sample	biospecimen_anatomic_site	Cartilage		
+sample	biospecimen_anatomic_site	Cecum		
+sample	biospecimen_anatomic_site	Cell-Line		
+sample	biospecimen_anatomic_site	Central Nervous System		
+sample	biospecimen_anatomic_site	Cerebellum		
+sample	biospecimen_anatomic_site	Cerebral Cortex		
+sample	biospecimen_anatomic_site	Cerebrospinal Fluid		
+sample	biospecimen_anatomic_site	Cerebrum		
+sample	biospecimen_anatomic_site	Cervical Spine		
+sample	biospecimen_anatomic_site	Cervix		
+sample	biospecimen_anatomic_site	Chest		
+sample	biospecimen_anatomic_site	Chest Wall		
+sample	biospecimen_anatomic_site	Chin		
+sample	biospecimen_anatomic_site	Clavicle		
+sample	biospecimen_anatomic_site	Clitoris		
+sample	biospecimen_anatomic_site	Colon		
+sample	biospecimen_anatomic_site	Colon - Mucosa Only		
+sample	biospecimen_anatomic_site	Common Duct		
+sample	biospecimen_anatomic_site	Conjunctiva		
+sample	biospecimen_anatomic_site	Connective Tissue		
+sample	biospecimen_anatomic_site	Dermal		
+sample	biospecimen_anatomic_site	Descending Colon		
+sample	biospecimen_anatomic_site	Diaphragm		
+sample	biospecimen_anatomic_site	Duodenum		
+sample	biospecimen_anatomic_site	Ear		
+sample	biospecimen_anatomic_site	Ear Canal		
+sample	biospecimen_anatomic_site	Ear, Pinna (External)		
+sample	biospecimen_anatomic_site	Effusion		
+sample	biospecimen_anatomic_site	Elbow		
+sample	biospecimen_anatomic_site	Endocrine Gland		
+sample	biospecimen_anatomic_site	Epididymis		
+sample	biospecimen_anatomic_site	Epidural Space		
+sample	biospecimen_anatomic_site	Esophagogastric Junction		
+sample	biospecimen_anatomic_site	Esophagus		
+sample	biospecimen_anatomic_site	Esophagus - Mucosa Only		
+sample	biospecimen_anatomic_site	Eye		
+sample	biospecimen_anatomic_site	Fallopian Tube		
+sample	biospecimen_anatomic_site	Femoral Artery		
+sample	biospecimen_anatomic_site	Femoral Vein		
+sample	biospecimen_anatomic_site	Femur		
+sample	biospecimen_anatomic_site	Fibroblasts		
+sample	biospecimen_anatomic_site	Fibula		
+sample	biospecimen_anatomic_site	Finger		
+sample	biospecimen_anatomic_site	Floor Of Mouth		
+sample	biospecimen_anatomic_site	Fluid		
+sample	biospecimen_anatomic_site	Foot		
+sample	biospecimen_anatomic_site	Forearm		
+sample	biospecimen_anatomic_site	Forehead		
+sample	biospecimen_anatomic_site	Foreskin		
+sample	biospecimen_anatomic_site	Frontal Cortex		
+sample	biospecimen_anatomic_site	Frontal Lobe		
+sample	biospecimen_anatomic_site	Fundus Of Stomach		
+sample	biospecimen_anatomic_site	Gallbladder		
+sample	biospecimen_anatomic_site	Ganglia		
+sample	biospecimen_anatomic_site	Gastroesophageal Junction		
+sample	biospecimen_anatomic_site	Gastrointestinal Tract		
+sample	biospecimen_anatomic_site	Groin		
+sample	biospecimen_anatomic_site	Gum		
+sample	biospecimen_anatomic_site	Hand		
+sample	biospecimen_anatomic_site	Hard Palate		
+sample	biospecimen_anatomic_site	Head & Neck		
+sample	biospecimen_anatomic_site	Head - Face Or Neck, Nos		
+sample	biospecimen_anatomic_site	Heart		
+sample	biospecimen_anatomic_site	Hepatic		
+sample	biospecimen_anatomic_site	Hepatic Duct		
+sample	biospecimen_anatomic_site	Hepatic Vein		
+sample	biospecimen_anatomic_site	Hip		
+sample	biospecimen_anatomic_site	Hippocampus		
+sample	biospecimen_anatomic_site	Humerus		
+sample	biospecimen_anatomic_site	Hypopharynx		
+sample	biospecimen_anatomic_site	Ileum		
+sample	biospecimen_anatomic_site	Ilium		
+sample	biospecimen_anatomic_site	Index Finger		
+sample	biospecimen_anatomic_site	Ischium		
+sample	biospecimen_anatomic_site	Islet Cells		
+sample	biospecimen_anatomic_site	Jaw		
+sample	biospecimen_anatomic_site	Jejunum		
+sample	biospecimen_anatomic_site	Joint		
+sample	biospecimen_anatomic_site	Kidney		
+sample	biospecimen_anatomic_site	Knee		
+sample	biospecimen_anatomic_site	Lacrimal Gland		
+sample	biospecimen_anatomic_site	Large Bowel		
+sample	biospecimen_anatomic_site	Laryngopharynx		
+sample	biospecimen_anatomic_site	Larynx		
+sample	biospecimen_anatomic_site	Leg		
+sample	biospecimen_anatomic_site	Leptomeninges		
+sample	biospecimen_anatomic_site	Ligament		
+sample	biospecimen_anatomic_site	Lip		
+sample	biospecimen_anatomic_site	Liver		
+sample	biospecimen_anatomic_site	Lumbar Spine		
+sample	biospecimen_anatomic_site	Lung		
+sample	biospecimen_anatomic_site	Lymph Node		
+sample	biospecimen_anatomic_site	Lymph Node(s) Axilla		
+sample	biospecimen_anatomic_site	Lymph Node(s) Cervical		
+sample	biospecimen_anatomic_site	Lymph Node(s) Distant		
+sample	biospecimen_anatomic_site	Lymph Node(s) Epitrochlear		
+sample	biospecimen_anatomic_site	Lymph Node(s) Femoral		
+sample	biospecimen_anatomic_site	Lymph Node(s) Hilar		
+sample	biospecimen_anatomic_site	Lymph Node(s) Iliac-Common		
+sample	biospecimen_anatomic_site	Lymph Node(s) Iliac-External		
+sample	biospecimen_anatomic_site	Lymph Node(s) Inguinal		
+sample	biospecimen_anatomic_site	Lymph Node(s) Internal Mammary		
+sample	biospecimen_anatomic_site	Lymph Node(s) Mammary		
+sample	biospecimen_anatomic_site	Lymph Node(s) Mesenteric		
+sample	biospecimen_anatomic_site	Lymph Node(s) Occipital		
+sample	biospecimen_anatomic_site	Lymph Node(s) Paraaortic		
+sample	biospecimen_anatomic_site	Lymph Node(s) Parotid		
+sample	biospecimen_anatomic_site	Lymph Node(s) Pelvic		
+sample	biospecimen_anatomic_site	Lymph Node(s) Popliteal		
+sample	biospecimen_anatomic_site	Lymph Node(s) Regional		
+sample	biospecimen_anatomic_site	Lymph Node(s) Retroperitoneal		
+sample	biospecimen_anatomic_site	Lymph Node(s) Scalene		
+sample	biospecimen_anatomic_site	Lymph Node(s) Splenic		
+sample	biospecimen_anatomic_site	Lymph Node(s) Subclavicular		
+sample	biospecimen_anatomic_site	Lymph Node(s) Submandibular		
+sample	biospecimen_anatomic_site	Lymph Node(s) Supraclavicular		
+sample	biospecimen_anatomic_site	Lymph Nodes(s) Mediastinal		
+sample	biospecimen_anatomic_site	Mandible		
+sample	biospecimen_anatomic_site	Maxilla		
+sample	biospecimen_anatomic_site	Mediastinal Soft Tissue		
+sample	biospecimen_anatomic_site	Mediastinum		
+sample	biospecimen_anatomic_site	Mesentery		
+sample	biospecimen_anatomic_site	Mesothelium		
+sample	biospecimen_anatomic_site	Middle Finger		
+sample	biospecimen_anatomic_site	Mitochondria		
+sample	biospecimen_anatomic_site	Muscle		
+sample	biospecimen_anatomic_site	Nails		
+sample	biospecimen_anatomic_site	Nasal Cavity		
+sample	biospecimen_anatomic_site	Nasal Soft Tissue		
+sample	biospecimen_anatomic_site	Nasopharynx		
+sample	biospecimen_anatomic_site	Neck		
+sample	biospecimen_anatomic_site	Nerve		
+sample	biospecimen_anatomic_site	Nerve(s) Cranial		
+sample	biospecimen_anatomic_site	Occipital Cortex		
+sample	biospecimen_anatomic_site	Ocular Orbits		
+sample	biospecimen_anatomic_site	Omentum		
+sample	biospecimen_anatomic_site	Oral Cavity		
+sample	biospecimen_anatomic_site	Oral Cavity - Mucosa Only		
+sample	biospecimen_anatomic_site	Oropharynx		
+sample	biospecimen_anatomic_site	Other		
+sample	biospecimen_anatomic_site	Ovary		
+sample	biospecimen_anatomic_site	Palate		
+sample	biospecimen_anatomic_site	Pancreas		
+sample	biospecimen_anatomic_site	Paraspinal Ganglion		
+sample	biospecimen_anatomic_site	Parathyroid		
+sample	biospecimen_anatomic_site	Parotid Gland		
+sample	biospecimen_anatomic_site	Patella		
+sample	biospecimen_anatomic_site	Pelvis		
+sample	biospecimen_anatomic_site	Penis		
+sample	biospecimen_anatomic_site	Pericardium		
+sample	biospecimen_anatomic_site	Periorbital Soft Tissue		
+sample	biospecimen_anatomic_site	Peritoneal Cavity		
+sample	biospecimen_anatomic_site	Peritoneum		
+sample	biospecimen_anatomic_site	Pharynx		
+sample	biospecimen_anatomic_site	Pineal		
+sample	biospecimen_anatomic_site	Pineal Gland		
+sample	biospecimen_anatomic_site	Pituitary Gland		
+sample	biospecimen_anatomic_site	Placenta		
+sample	biospecimen_anatomic_site	Pleura		
+sample	biospecimen_anatomic_site	Popliteal Fossa		
+sample	biospecimen_anatomic_site	Prostate		
+sample	biospecimen_anatomic_site	Pylorus		
+sample	biospecimen_anatomic_site	Rectosigmoid Junction		
+sample	biospecimen_anatomic_site	Rectum		
+sample	biospecimen_anatomic_site	Retina		
+sample	biospecimen_anatomic_site	Retro-Orbital Region		
+sample	biospecimen_anatomic_site	Retroperitoneum		
+sample	biospecimen_anatomic_site	Rib		
+sample	biospecimen_anatomic_site	Ring Finger		
+sample	biospecimen_anatomic_site	Round Ligament		
+sample	biospecimen_anatomic_site	Sacrum		
+sample	biospecimen_anatomic_site	Salivary Gland		
+sample	biospecimen_anatomic_site	Scalp		
+sample	biospecimen_anatomic_site	Scapula		
+sample	biospecimen_anatomic_site	Sciatic Nerve		
+sample	biospecimen_anatomic_site	Scrotum		
+sample	biospecimen_anatomic_site	Seminal Vesicle		
+sample	biospecimen_anatomic_site	Shoulder		
+sample	biospecimen_anatomic_site	Sigmoid Colon		
+sample	biospecimen_anatomic_site	Sinus		
+sample	biospecimen_anatomic_site	Sinus(es), Maxillary		
+sample	biospecimen_anatomic_site	Skeletal Muscle		
+sample	biospecimen_anatomic_site	Skin		
+sample	biospecimen_anatomic_site	Skull		
+sample	biospecimen_anatomic_site	Small Bowel		
+sample	biospecimen_anatomic_site	Small Bowel - Mucosa Only		
+sample	biospecimen_anatomic_site	Small Finger		
+sample	biospecimen_anatomic_site	Soft Tissue		
+sample	biospecimen_anatomic_site	Spinal Column		
+sample	biospecimen_anatomic_site	Spinal Cord		
+sample	biospecimen_anatomic_site	Spleen		
+sample	biospecimen_anatomic_site	Splenic Flexure		
+sample	biospecimen_anatomic_site	Sternum		
+sample	biospecimen_anatomic_site	Stomach		
+sample	biospecimen_anatomic_site	Stomach - Mucosa Only		
+sample	biospecimen_anatomic_site	Subcutaneous Tissue		
+sample	biospecimen_anatomic_site	Synovium		
+sample	biospecimen_anatomic_site	Temporal Cortex		
+sample	biospecimen_anatomic_site	Tendon		
+sample	biospecimen_anatomic_site	Testis		
+sample	biospecimen_anatomic_site	Thigh		
+sample	biospecimen_anatomic_site	Thoracic Spine		
+sample	biospecimen_anatomic_site	Thorax		
+sample	biospecimen_anatomic_site	Throat		
+sample	biospecimen_anatomic_site	Thumb		
+sample	biospecimen_anatomic_site	Thymus		
+sample	biospecimen_anatomic_site	Thyroid		
+sample	biospecimen_anatomic_site	Tibia		
+sample	biospecimen_anatomic_site	Tongue		
+sample	biospecimen_anatomic_site	Tonsil		
+sample	biospecimen_anatomic_site	Tonsil (Pharyngeal)		
+sample	biospecimen_anatomic_site	Trachea / Major Bronchi		
+sample	biospecimen_anatomic_site	Transverse Colon		
+sample	biospecimen_anatomic_site	Trunk		
+sample	biospecimen_anatomic_site	Umbilical Cord		
+sample	biospecimen_anatomic_site	Ureter		
+sample	biospecimen_anatomic_site	Urethra		
+sample	biospecimen_anatomic_site	Urinary Tract		
+sample	biospecimen_anatomic_site	Uterus		
+sample	biospecimen_anatomic_site	Uvula		
+sample	biospecimen_anatomic_site	Vagina		
+sample	biospecimen_anatomic_site	Vas Deferens		
+sample	biospecimen_anatomic_site	Vein		
+sample	biospecimen_anatomic_site	Venous		
+sample	biospecimen_anatomic_site	Vertebra		
+sample	biospecimen_anatomic_site	Vulva		
+sample	biospecimen_anatomic_site	White Blood Cells		
+sample	biospecimen_anatomic_site	Wrist		
+sample	biospecimen_anatomic_site	Unknown		
+sample	biospecimen_anatomic_site	Not Reported		
+sample	biospecimen_anatomic_site	Not Allowed To Collect		
+sample	composition	Buccal Cells		
+sample	composition	Buffy Coat		
+sample	composition	Bone Marrow Components		
+sample	composition	Bone Marrow Components NOS		
+sample	composition	Control Analyte		
+sample	composition	Cell		
+sample	composition	Circulating Tumor Cell (CTC)		
+sample	composition	Derived Cell Line		
+sample	composition	EBV Immortalized		
+sample	composition	Fibroblasts from Bone Marrow Normal		
+sample	composition	Granulocytes		
+sample	composition	Human Original Cells		
+sample	composition	Lymphocytes		
+sample	composition	Mononuclear Cells from Bone Marrow Normal		
+sample	composition	Peripheral Blood Components NOS		
+sample	composition	Peripheral Blood Nucleated Cells		
+sample	composition	Pleural Effusion		
+sample	composition	Plasma		
+sample	composition	Peripheral Whole Blood		
+sample	composition	Serum		
+sample	composition	Saliva		
+sample	composition	Sputum		
+sample	composition	Solid Tissue		
+sample	composition	Whole Bone Marrow		
+sample	composition	Unknown		
+sample	composition	Not Reported		
+sample	composition	Not Allowed To Collect		
+sample	sample_type	Additional Metastatic		
+sample	sample_type	Additional - New Primary		
+sample	sample_type	Blood Derived Cancer - Bone Marrow, Post-treatment		
+sample	sample_type	Blood Derived Cancer - Peripheral Blood, Post-treatment		
+sample	sample_type	Blood Derived Normal		
+sample	sample_type	Bone Marrow Normal		
+sample	sample_type	Buccal Cell Normal		
+sample	sample_type	Cell Line Derived Xenograft Tissue		
+sample	sample_type	Cell Lines		
+sample	sample_type	cfDNA		
+sample	sample_type	Circulating Tumor Cell (CTC)		
+sample	sample_type	Control Analyte		
+sample	sample_type	Clinical		
+sample	sample_type	Contrived		
+sample	sample_type	ctDNA		
+sample	sample_type	DNA		
+sample	sample_type	EBV Immortalized Normal		
+sample	sample_type	FFPE Recurrent		
+sample	sample_type	FFPE Scrolls		
+sample	sample_type	Fibroblasts from Bone Marrow Normal		
+sample	sample_type	GenomePlex (Rubicon) Amplified DNA		
+sample	sample_type	Granulocytes		
+sample	sample_type	Human Tumor Original Cells		
+sample	sample_type	Metastatic		
+sample	sample_type	Mononuclear Cells from Bone Marrow Normal		
+sample	sample_type	Primary Blood Derived Cancer - Peripheral Blood		
+sample	sample_type	Recurrent Blood Derived Cancer - Peripheral Blood		
+sample	sample_type	Pleural Effusion		
+sample	sample_type	Primary Blood Derived Cancer - Bone Marrow		
+sample	sample_type	Primary Tumor		
+sample	sample_type	Primary Xenograft Tissue		
+sample	sample_type	Post neo-adjuvant therapy		
+sample	sample_type	Recurrent Blood Derived Cancer - Bone Marrow		
+sample	sample_type	Recurrent Tumor		
+sample	sample_type	Repli-G (Qiagen) DNA		
+sample	sample_type	Repli-G X (Qiagen) DNA		
+sample	sample_type	RNA		
+sample	sample_type	Slides		
+sample	sample_type	Solid Tissue Normal		
+sample	sample_type	Total RNA		
+sample	sample_type	Xenograft Tissue		
+sample	sample_type	Unknown		
+sample	sample_type	Not Reported		
+sample	sample_type	Not Allowed To Collect		
+study	study_completeness	0		
+study	study_completeness	1		
+study	study_completeness	2		
+subject	species	Drosophila melanogaster		
+subject	species	Homo sapiens		
+subject	species	Mus musculus		
+subject	species	Mustela putorius furo		
+subject	species	Rattus rattus		
+subject	species	Sus scrofa		
+subject	index_date	Diagnosis		
+subject	index_date	First Patient Visit		
+subject	index_date	Study Enrollment		
+subject	index_date	Infection		
+submitted_aligned_reads	data_category	Sequencing Data		
+submitted_aligned_reads	data_category	Sequencing Reads		
+submitted_aligned_reads	data_category	Raw Sequencing Data		
+submitted_aligned_reads	data_format	BAM		
+submitted_aligned_reads	data_format	BED		
+submitted_aligned_reads	data_type	Aligned Reads		
+submitted_aligned_reads	data_type	Alignment Coordinates		
+submitted_aligned_reads	experimental_strategy	WGS		
+submitted_aligned_reads	experimental_strategy	WXS		
+submitted_aligned_reads	experimental_strategy	Low Pass WGS		
+submitted_aligned_reads	experimental_strategy	Validation		
+submitted_aligned_reads	experimental_strategy	RNA-Seq		
+submitted_aligned_reads	experimental_strategy	miRNA-Seq		
+submitted_aligned_reads	experimental_strategy	Total RNA-Seq		
+submitted_aligned_reads	experimental_strategy	DNA Panel		
+submitted_genomic_profile	data_category	Combined Nucleotide Variation		
+submitted_genomic_profile	data_category	Genomic Profiling		
+submitted_genomic_profile	data_format	MAF		
+submitted_genomic_profile	data_format	TSV		
+submitted_genomic_profile	data_format	VCF		
+submitted_genomic_profile	data_format	XML		
+submitted_genomic_profile	data_format	TXT		
+submitted_genomic_profile	data_format	PLINK		
+submitted_genomic_profile	data_type	FoundationOne Report		
+submitted_genomic_profile	data_type	GENIE Report		
+submitted_genomic_profile	data_type	Raw CGI Variant		
+submitted_genomic_profile	data_type	Aggregated mutation information		
+submitted_genomic_profile	data_type	GWAS dosage SNP data		
+submitted_genomic_profile	experimental_strategy	Targeted Sequencing		
+submitted_genomic_profile	experimental_strategy	WGS		
+submitted_genomic_profile	experimental_strategy	WXS		
+submitted_genomic_profile	experimental_strategy	Low Pass WGS		
+submitted_genomic_profile	experimental_strategy	Validation		
+submitted_genomic_profile	experimental_strategy	RNA-Seq		
+submitted_genomic_profile	experimental_strategy	miRNA-Seq		
+submitted_genomic_profile	experimental_strategy	Total RNA-Seq		
+submitted_genomic_profile	experimental_strategy	DNA Panel		
+submitted_methylation	assay_method	Methylation Array		
+submitted_methylation	assay_instrument	Illumina		
+submitted_methylation	assay_instrument_model	Illumina Infinium HumanMethylation450		
+submitted_methylation	assay_instrument_model	Illumina Infinium HumanMethylation450K		
+submitted_methylation	data_category	Methylation Data		
+submitted_methylation	data_format	IDAT		
+submitted_methylation	data_type	Methylation Intensity Values		
+submitted_unaligned_reads	data_category	Sequencing Data		
+submitted_unaligned_reads	data_category	Sequencing Reads		
+submitted_unaligned_reads	data_category	Raw Sequencing Data		
+submitted_unaligned_reads	data_type	Unaligned Reads		
+submitted_unaligned_reads	data_format	BAM		
+submitted_unaligned_reads	data_format	FASTQ		
+submitted_unaligned_reads	data_format	FASTA		
+submitted_unaligned_reads	experimental_strategy	ATAC-Seq		
+submitted_unaligned_reads	experimental_strategy	Bisulfite-Seq		
+submitted_unaligned_reads	experimental_strategy	ChIP-Seq		
+submitted_unaligned_reads	experimental_strategy	Low Pass WGS		
+submitted_unaligned_reads	experimental_strategy	miRNA-Seq		
+submitted_unaligned_reads	experimental_strategy	RNA-Seq		
+submitted_unaligned_reads	experimental_strategy	Targeted Sequencing		
+submitted_unaligned_reads	experimental_strategy	WGS		
+submitted_unaligned_reads	experimental_strategy	WXS		
+submitted_unaligned_reads	read_pair_number	R1		
+submitted_unaligned_reads	read_pair_number	R2		
+tangent_copy_number	data_category	Copy Number Variation		
+tangent_copy_number	data_format	TXT		
+tangent_copy_number	data_type	Copy Number Estimate		
+tangent_copy_number	experimental_strategy	Genotyping Array		
+tangent_copy_number	platform	Illumina Infinium HumanExome BeadChip		
+tangent_copy_number	platform	Illumina OMNI 5M SNP Array		
+tangent_copy_number	platform	Illumina OMNI 2.5M SNP Array		
+tangent_copy_number	platform	Affymetrix Genome-Wide Human SNP Array 6.0		

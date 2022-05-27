@@ -14,6 +14,17 @@ from ruamel_yaml.scalarstring import DoubleQuotedScalarString as dbl_quote
 from ruamel_yaml.comments import CommentedMap as cmap
 from schema_utils import stripper
 
+'''
+def stripper(string):
+    
+    if isinstance(string, str):
+        string = string.strip()
+        string = string.strip('|"\',')
+    elif isinstance(string, float):
+        if isnan(string):       
+            return None
+    return string
+'''
 
 def get_params():
     """
@@ -264,10 +275,10 @@ def build_enums(enum_df):
                     enum_dict[node][field]['deprecated_enum'].append(enum_val)
 
                 if enum_def == 'common':
-                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': [dbl_quote('_terms.yaml#/'+re.sub('[\W]+', '', enum_val.lower().strip().replace(' ', '_'))+'/'+enum_def)]}
+                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': [dbl_quote('_terms_enum.yaml#/'+re.sub('[\W]+', '', enum_val.lower().strip().replace(' ', '_'))+'/'+enum_def)]}
 
                 elif enum_def == 'specific':
-                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': [dbl_quote('_terms.yaml#/'+re.sub('[\W]+', '', enum_val.lower().strip().replace(' ', '_'))+'/'+node+'/'+field)]}
+                    enum_dict[node][field]['enumDef'][enum_val] = {'$ref': [dbl_quote('_terms_enum.yaml#/'+re.sub('[\W]+', '', enum_val.lower().strip().replace(' ', '_'))+'/'+node+'/'+field)]}
 
                 elif enum_def:
                     enum_dict[node][field]['enumDef'][enum_val] = {'$ref': [dbl_quote(stripper(x)) for x in enum_def.split(',')]}
@@ -782,113 +793,134 @@ def build_terms(terms_in_file, in_dir, out_dir, extension):
 
 
     terms_df       = terms_df.where(terms_df.notnull(), None)
-
-    term_dicts     = terms_df.to_dict('records')
-
-    dict_of_terms  = {'id' : '_terms'}
-
-    for term in term_dicts:
-        out_dict     = {}
-        property_nm  = ''
-        termdef      = {}
-
-        for key, val in term.items():
-            key = key[1:-1]
-
-            if key == 'property_or_enum':
-                if val == 'id':
-                    property_nm = '_id'
-
-                else:
-                    val_ = re.sub('[\W]+', '', val.lower().strip().replace(' ', '_'))
-                    property_nm = validate_enum(val_) # val
-
-            elif key == 'node':
-                node = val
-
-            elif key == 'enum_property':
-                enum = val
-
-            elif key == 'description':
-                if val:
-                    val = fss(validate_desc(val))
-
-                out_dict[key] = val
-
-            elif 'termDef:' in key:
-                key_ = key.replace('termDef:','')
-
-                if key_ == 'term':
-                    if val:
-                        val = fss(validate_desc(val))
-
-                    termdef[key_] = val
-
-                elif key_ == 'term_url':
-                    if val:
-                        val = dbl_quote(val)
-
-                    termdef[key_] = val
-
-                elif key_ == 'cde_id':
-                    try:
-                        termdef[key_] = int(val)
-
-                    except:
-                        termdef[key_] = val
-
-                elif key_ == 'cde_version':
-                    try:
-                        termdef[key_] = float(val)
-
-                    except:
-                        termdef[key_] = val
-
-                elif key_ in ['term_id' , 'term_version']:
-                    if val:
-                        termdef[key_] = val
-
-                else:
-                    termdef[key_] = val
-
-        out_dict['termDef'] = termdef
-
-        if property_nm not in dict_of_terms:
-            dict_of_terms[property_nm] = {}
-
-        if node == 'common':
-            dict_of_terms[property_nm][node] = out_dict
-
-        else:
-            if node in dict_of_terms[property_nm]:
-                dict_of_terms[property_nm][node][enum] = out_dict
-
+    
+    levels         = terms_df['<level>'].unique()
+    
+    for level in levels:
+        if level in ['property', 'enum']:
+            tmp_terms_df = terms_df[terms_df['<level>'] == level]
+            
+            tmp_terms_df = tmp_terms_df.drop(['<level>'], axis = 1)
+            
+            term_dicts   = tmp_terms_df.to_dict('records')
+            
+            
+            if level == 'property':
+                dict_of_terms  = {'id' : '_terms'}
+            
             else:
-                dict_of_terms[property_nm][node]       = {}
-                dict_of_terms[property_nm][node][enum] = out_dict
-
-    yaml = YAML()
-    yaml.default_flow_style = False
-    yaml.indent(offset = 2, sequence = 4, mapping = 2)
-    yaml.representer.add_representer(type(None), my_represent_none_blank)
-
-    num_terms  = len(dict_of_terms.keys())
-    term_props = cmap(dict_of_terms)
-
-    # insert blank lines in properties
-    for k in dict_of_terms.keys():
-        term_props.yaml_set_comment_before_after_key(k, before='\n')
-
-    with open('{0}{1}.yaml'.format(out_dir, '_terms'), 'w') as file:
-        yaml.dump(term_props, file)
-
-    print('*'*100, '\n')
-    print(' '*42, 'TSV  ---->  YAML', ' '*42, '\n')
-    print('*'*100, '\n')
-    print('Source Directory      : {0}'.format(in_dir), '\n')
-    print('Number of Terms       : {0}'.format(num_terms), '\n')
-    print('Destination Directory : {0}'.format(out_dir))
-    print('*'*100, '\n')
+                dict_of_terms  = {'id' : '_terms'+'_'+level}
+            
+            
+            for term in term_dicts:
+                out_dict     = {}
+                property_nm  = ''
+                termdef      = {}
+        
+                for key, val in term.items():
+                    key = key[1:-1]
+        
+                    if key == 'property_or_enum':
+                        if val == 'id':
+                            property_nm = '_id'
+        
+                        else:
+                            val_ = re.sub('[\W]+', '', val.lower().strip().replace(' ', '_'))
+                            property_nm = validate_enum(val_) # val
+        
+                    elif key == 'node':
+                        node = val
+        
+                    elif key == 'enum_property':
+                        enum = val
+        
+                    elif key == 'description':
+                        if val:
+                            val = fss(validate_desc(val))
+        
+                        out_dict[key] = val
+        
+                    elif 'termDef:' in key:
+                        key_ = key.replace('termDef:','')
+        
+                        if key_ == 'term':
+                            if val:
+                                val = fss(validate_desc(val))
+        
+                            termdef[key_] = val
+        
+                        elif key_ == 'term_url':
+                            if val:
+                                val = dbl_quote(val)
+        
+                            termdef[key_] = val
+        
+                        elif key_ == 'cde_id':
+                            try:
+                                termdef[key_] = int(val)
+        
+                            except:
+                                termdef[key_] = val
+        
+                        elif key_ == 'cde_version':
+                            try:
+                                termdef[key_] = float(val)
+        
+                            except:
+                                termdef[key_] = val
+        
+                        elif key_ in ['term_id' , 'term_version']:
+                            if val:
+                                termdef[key_] = val
+        
+                        else:
+                            termdef[key_] = val
+        
+                out_dict['termDef'] = termdef
+        
+                if property_nm not in dict_of_terms:
+                    dict_of_terms[property_nm] = {}
+        
+                if node == 'common':
+                    dict_of_terms[property_nm][node] = out_dict
+        
+                else:
+                    if node in dict_of_terms[property_nm]:
+                        dict_of_terms[property_nm][node][enum] = out_dict
+        
+                    else:
+                        dict_of_terms[property_nm][node]       = {}
+                        dict_of_terms[property_nm][node][enum] = out_dict
+        
+            yaml = YAML()
+            yaml.default_flow_style = False
+            yaml.indent(offset = 2, sequence = 4, mapping = 2)
+            yaml.representer.add_representer(type(None), my_represent_none_blank)
+        
+            num_terms  = len(dict_of_terms.keys())
+            term_props = cmap(dict_of_terms)
+        
+            # insert blank lines in properties
+            for k in dict_of_terms.keys():
+                term_props.yaml_set_comment_before_after_key(k, before='\n')
+        
+            if level == 'property':
+                file_name = '{0}{1}.yaml'.format(out_dir, '_terms')
+                
+            else:
+                file_name = '{0}{1}_{2}.yaml'.format(out_dir, '_terms', level)
+            
+            with open(file_name, 'w') as file:
+                yaml.dump(term_props, file)
+            
+            print('*'*100, '\n')
+            print(' '*42, 'TSV  ---->  YAML', ' '*42, '\n')
+            print('*'*100, '\n')
+            print('Source Directory      : {0}'.format(in_dir), '\n')
+            print('File Name             : {0}'.format(file_name), '\n')
+            print('Number of Terms       : {0}'.format(num_terms), '\n')
+            print('Destination Directory : {0}'.format(out_dir))
+            print('*'*100, '\n')
 
 
 if __name__ == '__main__':
@@ -902,6 +934,12 @@ if __name__ == '__main__':
     out_dir      = args.out_dir
     extension    = args.extension
     terms_file   = args.terms_file
+    '''
+    in_dir       = '/Users/gajananganji/Work/_GIT/tsv_yaml/gdcdictionary/tsv'
+    out_dir      = '/Users/gajananganji/Work/_GIT/tsv_yaml/gdcdictionary/yaml'
+    extension    = 'xlsx'
+    terms_file   = True
+    '''
 
     if in_dir[-1] != '/':
         in_dir += '/'

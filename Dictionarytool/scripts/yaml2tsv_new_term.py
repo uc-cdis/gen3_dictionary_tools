@@ -18,8 +18,17 @@ from ruamel_yaml.constructor import DuplicateKeyError
 2. lrefs_to_srefs
 
 '''
+'''
+def stripper(string):
 
-
+    if isinstance(string, str):
+        string = string.strip()
+        string = string.strip('|"\',')
+    elif isinstance(string, float):
+        if isnan(string):
+            return None
+    return string
+'''
 def csv_list(string):
     return string.split(',')
 
@@ -122,11 +131,12 @@ def load_yams(in_dir, yaml_files, terms_file):
     filteredyams = list(filter(yam_filter, yamfiles))
 
     if terms_file:
-        yaml_files = ['_terms']
+        #yaml_files = ['_terms']
+        filteredyams = [f for f in filteredyams if '_terms' == f.split('/')[-1][0:6]]
 
     else:
-        filteredyams = [f for f in filteredyams if '_terms.yaml' not in f]
-
+        filteredyams = [f for f in filteredyams if '_terms' != f.split('/')[-1][0:6]]
+    '''
     if yaml_files !=[]:
         temp_yams = []
 
@@ -136,6 +146,7 @@ def load_yams(in_dir, yaml_files, terms_file):
                     temp_yams.append(j)
 
         filteredyams= temp_yams.copy()
+    '''
 
     filteredyams = sorted(filteredyams)
 
@@ -828,7 +839,7 @@ def export_terms(terms, in_dir, out_dir, dictionary, extension):
     print('*'*100, '\n')
 
 
-def export_terms_future(terms, in_dir, out_dir, dictionary, extension):
+def export_terms_future(terms_file_list, in_dir, out_dir, dictionary, extension):
     """
     Process _terms.yaml file and generate TSV file
     Copy of export_terms with support for extracting node & enum property info
@@ -838,65 +849,78 @@ def export_terms_future(terms, in_dir, out_dir, dictionary, extension):
     terms_dict      = {}
     enum_terms_dict = {}
 
-    for key, val in terms.items():
-        if isinstance(key, str) and key == 'id':
-            continue
+    for terms in terms_file_list:
+        terms_id = terms['id']
 
-        for k, v in val.items():
-            if k == 'common':
-                row = {'<property_or_enum>': key}
+        if terms_id == '_terms':
+            terms_level = 'property'
 
-                for i,j in v.items():
-                    if i == 'termDef':
-                        for m,n in j.items():
-                            if n:
-                                row['<'+i+':'+m+'>'] = str(n)
+        else:
+            terms_level = terms_id.replace('_terms_', '')
 
-                            else:
-                                row['<'+i+':'+m+'>'] = n
+        for key, val in terms.items():
+            if isinstance(key, str) and key == 'id':
+                continue
 
-                    elif i == 'description':
-                        if j:
-                            row['<'+i+'>'] = ' '.join(j.strip().split(' '))
+            for k, v in val.items():
+                if k == 'common':
+                    row = {'<property_or_enum>': key,
+                           '<level>': terms_level,
+                          }
 
-                        else:
-                            row['<'+i+'>'] = None
-
-                    else:
-                        row['<'+i+'>'] = j
-
-                row['<node>']          = k
-                row['<enum_property>'] = ''
-
-                terms_dict[key+':'+k]  = row
-
-            else:
-                for i,j in v.items():
-                    row = {'<property_or_enum>': key}
-
-                    for c,d in j.items():
-                        if c == 'termDef':
-                            for m,n in d.items():
+                    for i,j in v.items():
+                        if i == 'termDef':
+                            for m,n in j.items():
                                 if n:
-                                    row['<'+c+':'+m+'>'] = str(n)
+                                    row['<'+i+':'+m+'>'] = str(n)
 
                                 else:
-                                    row['<'+c+':'+m+'>'] = n
-                        
-                        elif c == 'description':
-                            if d:
-                                row['<'+c+'>'] = ' '.join(d.strip().split(' '))
+                                    row['<'+i+':'+m+'>'] = n
+
+                        elif i == 'description':
+                            if j:
+                                row['<'+i+'>'] = ' '.join(j.strip().split(' '))
 
                             else:
-                                row['<'+c+'>'] =  None
+                                row['<'+i+'>'] = None
 
                         else:
-                            row['<'+c+'>'] = d
+                            row['<'+i+'>'] = j
 
-                    row['<node>']               = k
-                    row['<enum_property>']      = i
+                    row['<node>']          = k
+                    row['<enum_property>'] = ''
 
-                    terms_dict[key+':'+k+':'+i] = row
+                    terms_dict[key+':'+k]  = row
+
+                else:
+                    for i,j in v.items():
+                        row = {'<property_or_enum>': key,
+                               '<level>': terms_level,
+                              }
+
+                        for c,d in j.items():
+                            if c == 'termDef':
+                                for m,n in d.items():
+                                    if n:
+                                        row['<'+c+':'+m+'>'] = str(n)
+
+                                    else:
+                                        row['<'+c+':'+m+'>'] = n
+
+                            elif c == 'description':
+                                if d:
+                                    row['<'+c+'>'] = ' '.join(d.strip().split(' '))
+
+                                else:
+                                    row['<'+c+'>'] =  None
+
+                            else:
+                                row['<'+c+'>'] = d
+
+                        row['<node>']               = k
+                        row['<enum_property>']      = i
+
+                        terms_dict[key+':'+k+':'+i] = row
 
 
     yamdics_no_terms, filteredyams_no_terms = load_yams(in_dir, [], False)
@@ -953,8 +977,15 @@ if __name__ == '__main__':
     yaml_files   = args.yaml_files
     terms_file   = args.terms_file
     first_import = args.first_import
-
-
+    '''
+    in_dir       = '/Users/gajananganji/Work/_GIT/tsv_yaml/gdcdictionary/yertle/gdcdictionary/schemas/'
+    out_dir      = '/Users/gajananganji/Work/_GIT/tsv_yaml/gdcdictionary/tsv/'
+    dictionary   = 'test'
+    extension    = 'xlsx'
+    yaml_files   = []
+    terms_file   = True
+    first_import = False
+    '''
     if in_dir[-1] != '/':
         in_dir += '/'
 
@@ -972,7 +1003,7 @@ if __name__ == '__main__':
             export_terms(yamdics[0], in_dir, out_dir, dictionary, extension)
 
         else:
-            export_terms_future(yamdics[0], in_dir, out_dir, dictionary, extension)
+            export_terms_future(yamdics, in_dir, out_dir, dictionary, extension)
 
     else:
         export_nodes_props(yamdics, out_dir, dictionary, extension)

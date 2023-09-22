@@ -3,3 +3,4 @@ argparse>=1.1
 pandas>=0.25.3
 re>=2.2.1
 ruamel.yaml>=0.16.5
+numpy>=1.22.2 # not directly required, pinned by Snyk to avoid a vulnerability
